@@ -16,7 +16,8 @@ const ProductsPage: React.FC = () => {
       price: 0,
       originalPrice: 6000,
       image: 'https://images.pexels.com/photos/442576/pexels-photo-442576.jpeg?auto=compress&cs=tinysrgb&w=200',
-      category: 'ordinary'
+      category: 'ordinary',
+      cycleDays: 1
     },
     {
       id: '2',
@@ -24,7 +25,8 @@ const ProductsPage: React.FC = () => {
       description: 'Each Return: 1000.00\nCycling: 180Times',
       price: 10000,
       image: 'https://images.pexels.com/photos/1295572/pexels-photo-1295572.jpeg?auto=compress&cs=tinysrgb&w=200',
-      category: 'ordinary'
+      category: 'ordinary',
+      cycleDays: 180
     },
     {
       id: '3',
@@ -32,7 +34,8 @@ const ProductsPage: React.FC = () => {
       description: 'Each Return: 3000.00\nCycling: 180Times',
       price: 30000,
       image: 'https://images.pexels.com/photos/298863/pexels-photo-298863.jpeg?auto=compress&cs=tinysrgb&w=200',
-      category: 'ordinary'
+      category: 'ordinary',
+      cycleDays: 180
     },
     {
       id: '4',
@@ -40,7 +43,8 @@ const ProductsPage: React.FC = () => {
       description: 'Each Return: 5000.00\nCycling: 180Times',
       price: 50000,
       image: 'https://images.pexels.com/photos/442576/pexels-photo-442576.jpeg?auto=compress&cs=tinysrgb&w=200',
-      category: 'ordinary'
+      category: 'ordinary',
+      cycleDays: 180
     }
     ,
     // Newly added Ordinary products
@@ -50,15 +54,17 @@ const ProductsPage: React.FC = () => {
       description: 'Each Return: 16000.00\nCycling: 180Times',
       price: 160000,
       image: 'https://images.pexels.com/photos/190819/pexels-photo-190819.jpeg?auto=compress&cs=tinysrgb&w=200',
-      category: 'ordinary'
+      category: 'ordinary',
+      cycleDays: 180
     },
     {
       id: '6',
       name: 'Drone Camera',
       description: 'Each Return: 30000.00\nCycling: 180Times',
       price: 300000,
-      image: 'https://images.pexels.com/photos/62289/pexels-photo-62289.jpeg?auto=compress&cs=tinysrgb&w=200',
-      category: 'ordinary'
+      image: 'https://images.pexels.com/photos/1714208/pexels-photo-1714208.jpeg?auto=compress&cs=tinysrgb&w=200',
+      category: 'ordinary',
+      cycleDays: 180
     },
 
     // VIP products
@@ -68,7 +74,8 @@ const ProductsPage: React.FC = () => {
       description: 'Each Return: 50000.00\nCycling: 180Times\nVIP Access',
       price: 500000,
       image: 'https://images.pexels.com/photos/699459/pexels-photo-699459.jpeg?auto=compress&cs=tinysrgb&w=200',
-      category: 'vip'
+      category: 'vip',
+      cycleDays: 180
     },
     {
       id: '8',
@@ -76,15 +83,17 @@ const ProductsPage: React.FC = () => {
       description: 'Each Return: 84000.00\nCycling: 180Times\nVIP Access',
       price: 700000,
       image: 'https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=200',
-      category: 'vip'
+      category: 'vip',
+      cycleDays: 180
     },
     {
       id: '9',
       name: 'VIP Silver Pack',
       description: 'Each Return: 120000.00\nCycling: 180Times\nVIP Access',
       price: 1000000,
-      image: 'https://images.pexels.com/photos/698459/pexels-photo-698459.jpeg?auto=compress&cs=tinysrgb&w=200',
-      category: 'vip'
+      image: 'https://images.pexels.com/photos/586570/pexels-photo-586570.jpeg?auto=compress&cs=tinysrgb&w=200',
+      category: 'vip',
+      cycleDays: 180
     },
     {
       id: '10',
@@ -92,7 +101,8 @@ const ProductsPage: React.FC = () => {
       description: 'Each Return: 560000.00\nCycling: 180Times\nVIP Access',
       price: 3000000,
       image: 'https://images.pexels.com/photos/670529/pexels-photo-670529.jpeg?auto=compress&cs=tinysrgb&w=200',
-      category: 'vip'
+      category: 'vip',
+      cycleDays: 180
     },
     {
       id: '11',
@@ -100,7 +110,8 @@ const ProductsPage: React.FC = () => {
       description: 'Each Return: 900000.00\nCycling: 180Times\nVIP Access',
       price: 5000000,
       image: 'https://images.pexels.com/photos/699459/pexels-photo-699459.jpeg?auto=compress&cs=tinysrgb&w=200',
-      category: 'vip'
+      category: 'vip',
+      cycleDays: 180
     }
   ];
 
@@ -117,7 +128,7 @@ const ProductsPage: React.FC = () => {
         productId: product.id,
         product: product,
         purchaseDate: new Date(),
-        expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days
+        expiresAt: new Date(Date.now() + (product.cycleDays || 0) * 24 * 60 * 60 * 1000), // cycle-based expiry
         isActive: true,
       };
       

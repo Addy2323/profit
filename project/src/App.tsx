@@ -14,6 +14,8 @@ import WithdrawalPage from './pages/WithdrawalPage';
 import LuckyDrawPage from './pages/LuckyDrawPage';
 import ProfilePage from './pages/ProfilePage';
 import SharePage from './pages/share';
+import ProjectsPage from './pages/ProjectsPage';
+import TeamPage from './pages/TeamPage2';
 
 function App() {
   return (
@@ -24,6 +26,14 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/" element={<MobileLayout />}>
             <Route index element={<HomePage />} />
+            <Route
+              path="team"
+              element={
+                <ProtectedRoute>
+                  <TeamPage />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="dashboard"
               element={
@@ -45,6 +55,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ProductsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="projects"
+              element={
+                <ProtectedRoute>
+                  <ProjectsPage />
                 </ProtectedRoute>
               }
             />
