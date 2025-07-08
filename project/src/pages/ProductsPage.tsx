@@ -29,17 +29,77 @@ const ProductsPage: React.FC = () => {
     {
       id: '3',
       name: 'Electric toothbrush',
-      description: 'Each Return: 3000.00',
-      price: 25000,
+      description: 'Each Return: 3000.00\nCycling: 180Times',
+      price: 30000,
       image: 'https://images.pexels.com/photos/298863/pexels-photo-298863.jpeg?auto=compress&cs=tinysrgb&w=200',
       category: 'ordinary'
     },
     {
       id: '4',
       name: 'Premium Gaming Bundle',
-      description: 'Each Return: 15000.00\nCycling: 90Days\nVIP Access',
+      description: 'Each Return: 5000.00\nCycling: 180Times',
       price: 50000,
       image: 'https://images.pexels.com/photos/442576/pexels-photo-442576.jpeg?auto=compress&cs=tinysrgb&w=200',
+      category: 'ordinary'
+    }
+    ,
+    // Newly added Ordinary products
+    {
+      id: '5',
+      name: 'Smart Watch',
+      description: 'Each Return: 16000.00\nCycling: 180Times',
+      price: 160000,
+      image: 'https://images.pexels.com/photos/190819/pexels-photo-190819.jpeg?auto=compress&cs=tinysrgb&w=200',
+      category: 'ordinary'
+    },
+    {
+      id: '6',
+      name: 'Drone Camera',
+      description: 'Each Return: 30000.00\nCycling: 180Times',
+      price: 300000,
+      image: 'https://images.pexels.com/photos/62289/pexels-photo-62289.jpeg?auto=compress&cs=tinysrgb&w=200',
+      category: 'ordinary'
+    },
+
+    // VIP products
+    {
+      id: '7',
+      name: 'VIP Starter Pack',
+      description: 'Each Return: 50000.00\nCycling: 180Times\nVIP Access',
+      price: 500000,
+      image: 'https://images.pexels.com/photos/699459/pexels-photo-699459.jpeg?auto=compress&cs=tinysrgb&w=200',
+      category: 'vip'
+    },
+    {
+      id: '8',
+      name: 'VIP Bronze Pack',
+      description: 'Each Return: 84000.00\nCycling: 180Times\nVIP Access',
+      price: 700000,
+      image: 'https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=200',
+      category: 'vip'
+    },
+    {
+      id: '9',
+      name: 'VIP Silver Pack',
+      description: 'Each Return: 120000.00\nCycling: 180Times\nVIP Access',
+      price: 1000000,
+      image: 'https://images.pexels.com/photos/698459/pexels-photo-698459.jpeg?auto=compress&cs=tinysrgb&w=200',
+      category: 'vip'
+    },
+    {
+      id: '10',
+      name: 'VIP Gold Pack',
+      description: 'Each Return: 560000.00\nCycling: 180Times\nVIP Access',
+      price: 3000000,
+      image: 'https://images.pexels.com/photos/670529/pexels-photo-670529.jpeg?auto=compress&cs=tinysrgb&w=200',
+      category: 'vip'
+    },
+    {
+      id: '11',
+      name: 'VIP Platinum Pack',
+      description: 'Each Return: 900000.00\nCycling: 180Times\nVIP Access',
+      price: 5000000,
+      image: 'https://images.pexels.com/photos/699459/pexels-photo-699459.jpeg?auto=compress&cs=tinysrgb&w=200',
       category: 'vip'
     }
   ];
