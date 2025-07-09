@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 const WithdrawalPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [amount, setAmount] = useState('');
   const [error, setError] = useState('');
 
@@ -27,9 +27,38 @@ const WithdrawalPage: React.FC = () => {
       return;
     }
 
-    // Clear error & proceed (mock)
+    // Record withdrawal as a pending transaction and deduct balance immediately.
+    // Deduct balance
+    if(user){
+      const newBalance = (user.balance || 0) - numericAmount;
+      updateUser({balance:newBalance});
+      // also update in users list
+      try{
+        const users = JSON.parse(localStorage.getItem('profitnet_users') || '[]');
+        const idx = users.findIndex((u:any)=>u.id===user.id);
+        if(idx!==-1){
+          users[idx].balance = newBalance;
+          localStorage.setItem('profitnet_users',JSON.stringify(users));
+        }
+      }catch(e){ console.error(e); }
+    }
+
+    const tx = {
+      id: Date.now().toString(),
+      userId: user?.id || '',
+      type: 'withdrawal' as const,
+      amount: numericAmount,
+      description: 'Withdrawal request',
+      status: 'pending' as const,
+      createdAt: new Date(),
+    };
+    const existing = JSON.parse(localStorage.getItem(`transactions_${user?.id}`) || '[]');
+    existing.unshift(tx);
+    localStorage.setItem(`transactions_${user?.id}`, JSON.stringify(existing));
+
     setError('');
-    alert('Withdrawal request submitted!');
+    alert('Withdrawal request submitted and pending admin approval.');
+    navigate('/withdrawal-log');
   };
 
   return (

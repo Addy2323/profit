@@ -130,6 +130,7 @@ const ProductsPage: React.FC = () => {
         purchaseDate: new Date(),
         expiresAt: new Date(Date.now() + (product.cycleDays || 0) * 24 * 60 * 60 * 1000), // cycle-based expiry
         isActive: true,
+        returnsPaid: 0,
       };
       
       const existingPurchases = JSON.parse(localStorage.getItem(`purchases_${user?.id}`) || '[]');

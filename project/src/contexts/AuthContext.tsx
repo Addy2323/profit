@@ -64,6 +64,65 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Function to process daily returns for purchased products
+  const processDailyReturns = (u: User): User => {
+    const purchasesKey = `purchases_${u.id}`;
+    const txKey = `transactions_${u.id}`;
+    let purchases: any[] = JSON.parse(localStorage.getItem(purchasesKey) || '[]');
+    if (!purchases.length) return u;
+    let totalReturn = 0;
+    const now = Date.now();
+    purchases = purchases.map(p => {
+      const purchaseDate = new Date(p.purchaseDate).getTime();
+      const daysHeld = Math.floor((now - purchaseDate) / (1000 * 60 * 60 * 24));
+      const maxDays = p.product.cycleDays || 0;
+      const eligibleDays = Math.min(daysHeld, maxDays);
+      const returnsDue = Math.max(0, eligibleDays - (p.returnsPaid || 0));
+      if (returnsDue > 0) {
+        // determine daily return amount
+        const base = p.product.price > 0 ? p.product.price : (p.product.originalPrice || 0);
+        const dailyReturn = base / (p.product.cycleDays || 1);
+        const amount = dailyReturn * returnsDue;
+        totalReturn += amount;
+        p.returnsPaid = (p.returnsPaid || 0) + returnsDue;
+      }
+      // deactivate if cycle completed
+      if ((p.returnsPaid || 0) >= maxDays) {
+        p.isActive = false;
+      }
+      return p;
+    });
+    if (totalReturn > 0) {
+      // Update purchases storage
+      localStorage.setItem(purchasesKey, JSON.stringify(purchases));
+      // Update user balance
+      u = { ...u, balance: (u.balance || 0) + totalReturn };
+      // Save to users list
+      try {
+        const users = JSON.parse(localStorage.getItem('profitnet_users') || '[]');
+        const idx = users.findIndex((us: any) => us.id === u.id);
+        if (idx !== -1) {
+          users[idx].balance = u.balance;
+          localStorage.setItem('profitnet_users', JSON.stringify(users));
+        }
+      } catch(_){}
+      // Add transaction record
+      const tx = {
+        id: Date.now().toString(),
+        userId: u.id,
+        type: 'return' as const,
+        amount: totalReturn,
+        description: 'Daily project returns',
+        status: 'completed' as const,
+        createdAt: new Date(),
+      };
+      const existingTx = JSON.parse(localStorage.getItem(txKey) || '[]');
+      existingTx.unshift(tx);
+      localStorage.setItem(txKey, JSON.stringify(existingTx));
+    }
+    return u;
+  };
+
   useEffect(() => {
     // Initialize demo accounts in localStorage if they don't exist
     const existingUsers = localStorage.getItem('profitnet_users');
@@ -76,7 +135,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
+        const updated = processDailyReturns(parsedUser);
+        setUser(updated);
       } catch (error) {
         console.error('Error parsing stored user:', error);
         localStorage.removeItem('profitnet_user');
@@ -85,9 +145,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
   }, []);
 
-  const generateReferralCode = () => {
-    return Math.random().toString(36).substring(2, 8).toUpperCase();
-  };
+
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);

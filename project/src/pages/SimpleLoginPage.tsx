@@ -3,8 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Eye, EyeOff } from 'lucide-react';
 
-// Minimal login page: phone number + password only
-const LoginPage: React.FC = () => {
+/**
+ * Simple login screen with phone number and password fields only.
+ * Matches the compact card style shown in the provided screenshot.
+ */
+const SimpleLoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { login, isLoading } = useAuth();
 
@@ -26,7 +29,7 @@ const LoginPage: React.FC = () => {
       return;
     }
 
-    const email = `${formData.mobile}@profitnet.tz`;
+    const email = `${formData.mobile}@profitnet.tz`; // backend expects email format
     const success = await login(email, formData.password);
     if (success) {
       navigate('/dashboard');
@@ -38,8 +41,8 @@ const LoginPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-pink-900 flex items-center justify-center p-4">
       <div className="w-full max-w-sm bg-white/10 backdrop-blur-md rounded-lg p-8 shadow-lg">
-        <h2 className="text-center text-white text-xl font-semibold mb-6">WELCOME BACK!!!</h2>
-        <p className="text-center text-white text-sm mb-4">Login to your account</p>
+        <h2 className="text-center text-white text-xl font-semibold mb-6">Admin Login</h2>
+
         {error && (
           <div className="bg-red-500/20 border border-red-400 text-red-200 rounded p-3 mb-4 text-sm">
             {error}
@@ -70,7 +73,7 @@ const LoginPage: React.FC = () => {
               id="password"
               name="password"
               type={showPassword ? 'text' : 'password'}
-              placeholder="Enter your password"
+              placeholder="••••••••"
               className="w-full bg-gray-900/80 focus:bg-gray-900 text-white rounded px-4 py-3 outline-none pr-10"
               value={formData.password}
               onChange={handleChange}
@@ -91,22 +94,10 @@ const LoginPage: React.FC = () => {
           >
             {isLoading ? 'Processing…' : 'Login'}
           </button>
-
-          <p className="text-center text-sm text-white/80 mt-4">
-          Don't have an account?{' '}
-          <button
-            type="button"
-            onClick={() => navigate('/register')}
-            className="text-white underline"
-          >
-            Sign&nbsp;Up
-          </button>
-        </p>
-
         </form>
       </div>
     </div>
   );
 };
 
-export default LoginPage;
+export default SimpleLoginPage;
