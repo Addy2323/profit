@@ -67,7 +67,7 @@ const RegisterPage: React.FC = () => {
               id="name"
               name="name"
               type="text"
-              placeholder="John Doe"
+              placeholder="Enter your Full Name"
               className="w-full bg-gray-900/80 focus:bg-gray-900 text-white rounded px-4 py-3 outline-none"
               value={formData.name}
               onChange={handleChange}
@@ -82,7 +82,7 @@ const RegisterPage: React.FC = () => {
               id="mobile"
               name="mobile"
               type="tel"
-              placeholder="e.g. 712345678"
+              placeholder="e.g. 0712345678"
               className="w-full bg-gray-900/80 focus:bg-gray-900 text-white rounded px-4 py-3 outline-none"
               value={formData.mobile}
               onChange={handleChange}

@@ -5,7 +5,7 @@ export interface User {
   phone: string;
   network?: string;
   balance: number;
-  role: 'admin' | 'user';
+  role: 'admin' | 'user' | 'superadmin';
   referralCode: string;
   referredBy?: string;
   isActive: boolean;

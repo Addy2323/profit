@@ -26,15 +26,15 @@ const DashboardPage: React.FC = () => {
 
   const menuItems = [
     { icon: CreditCard, label: 'Recharge', path: '/recharge', color: 'from-cyan-500 to-cyan-600' },
-    { icon: Banknote, label: 'Withdrawal', path: '/withdrawal', color: 'from-purple-500 to-purple-600' },
-    { icon: Share, label: 'Share', action: '/share', color: 'from-blue-500 to-blue-600' },
-    { icon: Headphones, label: 'Customer Service', path: '/support', color: 'from-blue-500 to-blue-600' },
-    { icon: LinkIcon, label: 'Bind account', path: '/profile', color: 'from-cyan-500 to-cyan-600' },
-    { icon: FileText, label: 'Recharge log', path: '/recharge-log', color: 'from-orange-500 to-orange-600' },
-    { icon: TrendingDown, label: 'Withdrawal records', path: '/withdrawal-log', color: 'from-orange-500 to-orange-600' },
-    { icon: DollarSign, label: 'Cash log', path: '/cash-log', color: 'from-green-500 to-green-600' },
-    { icon: Dice6, label: 'Lucky draw', path: '/lucky-draw', color: 'from-purple-500 to-purple-600' },
-    { icon: LogOut, label: 'Sign out', action: 'logout', color: 'from-red-500 to-red-600' },
+    { icon: Banknote, label: 'Withdraw', path: '/withdrawal', color: 'from-green-500 to-green-600' },
+    { icon: Share, label: 'Invite', path: '/share', color: 'from-purple-500 to-purple-600' },
+    { icon: Headphones, label: 'Customer Service', path: '/CustomerService', color: 'from-blue-500 to-blue-600' },
+    { icon: LinkIcon, label: 'App Download', path: '/download', color: 'from-orange-500 to-orange-600' },
+    { icon: FileText, label: 'About Us', path: '/about', color: 'from-yellow-500 to-yellow-600' },
+    { icon: TrendingDown, label: 'Transaction History', path: '/transaction-history', color: 'from-red-500 to-red-600' },
+    { icon: DollarSign, label: 'Recharge Log', path: '/recharge-log', color: 'from-indigo-500 to-indigo-600' },
+    { icon: Dice6, label: 'Lottery', path: '/lucky-draw', color: 'from-pink-500 to-pink-600' },
+    { icon: LogOut, label: 'Logout', action: 'logout', color: 'from-gray-500 to-gray-600' }
   ];
 
   const handleMenuClick = (item: any) => {

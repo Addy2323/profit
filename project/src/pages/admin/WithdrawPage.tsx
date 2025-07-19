@@ -1,106 +1,115 @@
-import React, { useState } from 'react';
-import { ArrowDownCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { CheckCircle, XCircle } from 'lucide-react';
+import { format } from 'date-fns';
 
-/**
- * WithdrawPage – Admin tool to deduct money from any user's balance and
- * record a completed withdrawal transaction. All data is persisted in
- * localStorage following the same conventions used elsewhere in the app.
- */
 const WithdrawPage: React.FC = () => {
-  const [users, setUsers] = useState<any[]>(() => JSON.parse(localStorage.getItem('profitnet_users') || '[]'));
-  const [search, setSearch] = useState('');
+  const [pendingWithdrawals, setPendingWithdrawals] = useState<any[]>([]);
 
-  const saveUsers = (list: any[]) => {
-    setUsers(list);
-    localStorage.setItem('profitnet_users', JSON.stringify(list));
-  };
+  const loadPendingWithdrawals = () => {
+    const allUsers = JSON.parse(localStorage.getItem('profitnet_users') || '[]');
+    const pending: any[] = [];
 
-  const handleWithdraw = (u: any) => {
-    // choose payment method first
-    const methodInput = prompt('Select mobile payment method (mpesa / tigopesa / airtelmoney)', 'mpesa');
-    if (!methodInput) return;
-    const method = methodInput.toLowerCase();
-    const input = prompt(`Withdraw amount from ${u.name} (Balance: ${u.balance})`, '10000');
-    if (!input) return;
-    const amount = Number(input);
-    if (isNaN(amount) || amount <= 0) {
-      alert('Invalid amount.');
-      return;
-    }
-    if (amount > u.balance) {
-      alert('Amount exceeds user balance.');
-      return;
-    }
-
-    // Deduct balance
-    const updatedUsers = users.map(user => (user.id === u.id ? { ...user, balance: user.balance - amount } : user));
-    saveUsers(updatedUsers);
-
-    // Record transaction for the user
-    const txKey = `transactions_${u.id}`;
-    const tx: any[] = JSON.parse(localStorage.getItem(txKey) || '[]');
-    tx.push({
-      method,
-      id: Date.now().toString(),
-      type: 'withdrawal',
-      amount,
-      status: 'completed',
-      adminProcessed: true,
-      createdAt: new Date(),
+    allUsers.forEach((user: any) => {
+      const userTransactions = JSON.parse(localStorage.getItem(`transactions_${user.id}`) || '[]');
+      const userPending = userTransactions
+        .filter((tx: any) => tx.type === 'withdrawal' && tx.status === 'pending')
+        .map((tx: any) => ({ ...tx, user })); // Add user info to transaction
+      pending.push(...userPending);
     });
-    localStorage.setItem(txKey, JSON.stringify(tx));
 
-    alert('Withdrawal recorded.');
+    pending.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    setPendingWithdrawals(pending);
   };
 
-  const filtered = users.filter(u =>
-    [u.name, u.email, u.phone].some((f: string) => f.toLowerCase().includes(search.toLowerCase())),
-  );
+  useEffect(() => {
+    loadPendingWithdrawals();
+  }, []);
+
+  const createNotification = (userId: string, title: string, message: string) => {
+    const notificationsKey = `notifications_${userId}`;
+    const existingNotifications = JSON.parse(localStorage.getItem(notificationsKey) || '[]');
+    const newNotification = {
+      id: Date.now().toString(),
+      title,
+      message,
+      createdAt: new Date(),
+      read: false,
+    };
+    existingNotifications.unshift(newNotification);
+    localStorage.setItem(notificationsKey, JSON.stringify(existingNotifications));
+  };
+
+  const handleApproval = (txId: string, userId: string, amount: number, approve: boolean) => {
+    const users = JSON.parse(localStorage.getItem('profitnet_users') || '[]');
+    const userIndex = users.findIndex((u: any) => u.id === userId);
+    const user = users[userIndex];
+
+    const txKey = `transactions_${userId}`;
+    const transactions = JSON.parse(localStorage.getItem(txKey) || '[]');
+    const txIndex = transactions.findIndex((t: any) => t.id === txId);
+
+    if (txIndex === -1) {
+      alert('Transaction not found!');
+      return;
+    }
+
+    if (approve) {
+      transactions[txIndex].status = 'completed';
+      createNotification(userId, 'Withdrawal Approved', `Your withdrawal of ${amount.toLocaleString()} TZS has been approved.`);
+    } else {
+      transactions[txIndex].status = 'failed';
+      // Refund the amount to the user's balance
+      if (user) {
+        users[userIndex].balance = (user.balance || 0) + amount;
+        localStorage.setItem('profitnet_users', JSON.stringify(users));
+      }
+      createNotification(userId, 'Withdrawal Rejected', `Your withdrawal of ${amount.toLocaleString()} TZS was rejected. The amount has been returned to your balance.`);
+    }
+
+    localStorage.setItem(txKey, JSON.stringify(transactions));
+    alert(`Request has been ${approve ? 'approved' : 'rejected'}.`);
+    loadPendingWithdrawals(); // Refresh the list
+  };
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
-        <h1 className="text-xl font-bold">Withdraw Money</h1>
-        <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search user..."
-          className="px-2 py-1 text-sm border rounded"
-        />
-      </div>
-
+      <h1 className="text-xl font-bold mb-4">Pending Withdrawals</h1>
       <div className="overflow-x-auto bg-white rounded shadow">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-100">
             <tr>
-              <th className="px-4 py-2 text-left">Name</th>
-              <th className="px-4 py-2 text-left">Email</th>
-              <th className="px-4 py-2 text-center">Phone</th>
-              <th className="px-4 py-2 text-center">Balance</th>
+              <th className="px-4 py-2 text-left">Date</th>
+              <th className="px-4 py-2 text-left">User</th>
+              <th className="px-4 py-2 text-right">Amount (TZS)</th>
               <th className="px-4 py-2 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filtered.map(u => (
-              <tr key={u.id} className="border-t hover:bg-gray-50">
-                <td className="px-4 py-2">{u.name}</td>
-                <td className="px-4 py-2">{u.email}</td>
-                <td className="px-4 py-2 text-center">{u.phone}</td>
-                <td className="px-4 py-2 text-center">{u.balance.toLocaleString()}</td>
-                <td className="px-4 py-2 text-center">
+            {pendingWithdrawals.map(tx => (
+              <tr key={tx.id} className="border-t hover:bg-gray-50">
+                <td className="px-4 py-2">{format(new Date(tx.createdAt), 'yyyy-MM-dd HH:mm')}</td>
+                <td className="px-4 py-2">{tx.user.name} ({tx.user.phone})</td>
+                <td className="px-4 py-2 text-right">{tx.amount.toLocaleString()}</td>
+                <td className="px-4 py-2 text-center space-x-2">
                   <button
-                    onClick={() => handleWithdraw(u)}
-                    className="px-2 py-1 text-xs bg-purple-600 text-white rounded inline-flex items-center gap-1"
+                    onClick={() => handleApproval(tx.id, tx.userId, tx.amount, true)}
+                    className="px-2 py-1 text-xs bg-green-600 text-white rounded inline-flex items-center gap-1"
                   >
-                    <ArrowDownCircle size={14} /> Withdraw
+                    <CheckCircle size={14} /> Approve
+                  </button>
+                  <button
+                    onClick={() => handleApproval(tx.id, tx.userId, tx.amount, false)}
+                    className="px-2 py-1 text-xs bg-red-600 text-white rounded inline-flex items-center gap-1"
+                  >
+                    <XCircle size={14} /> Reject
                   </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-        {filtered.length === 0 && (
-          <div className="text-center py-12 text-gray-400">No users found.</div>
+        {pendingWithdrawals.length === 0 && (
+          <div className="text-center py-12 text-gray-400">No pending withdrawals.</div>
         )}
       </div>
     </div>

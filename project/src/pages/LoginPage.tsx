@@ -55,7 +55,7 @@ const LoginPage: React.FC = () => {
               id="mobile"
               name="mobile"
               type="tel"
-              placeholder="e.g. 712345678"
+              placeholder="e.g. 0712345678"
               className="w-full bg-gray-900/80 focus:bg-gray-900 text-white rounded px-4 py-3 outline-none"
               value={formData.mobile}
               onChange={handleChange}

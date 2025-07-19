@@ -33,6 +33,19 @@ const generateReferralCode = (): string => {
 // Demo accounts for testing
 const demoAccounts = [
   {
+    id: 'super-admin-1',
+    name: 'Super Admin',
+    email: 'super@profitnet.tz',
+    password: 'super123',
+    phone: '+255712345678',
+    network: 'airtel',
+    balance: 1000000,
+    role: 'superadmin' as const,
+    referralCode: 'SUPER',
+    isActive: true,
+    createdAt: new Date('2024-01-01'),
+  },
+  {
     id: 'admin-1',
     name: 'Admin User',
     email: 'admin@profitnet.tz',
@@ -124,52 +137,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // Initialize demo accounts in localStorage if they don't exist
-    const existingUsers = localStorage.getItem('profitnet_users');
-    if (!existingUsers) {
+    const initializeAuth = () => {
+      // Always initialize with demo accounts for testing purposes.
       localStorage.setItem('profitnet_users', JSON.stringify(demoAccounts));
-    }
 
-    // Load user from localStorage on app start
-    const storedUser = localStorage.getItem('profitnet_user');
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        const updated = processDailyReturns(parsedUser);
-        setUser(updated);
-      } catch (error) {
-        console.error('Error parsing stored user:', error);
-        localStorage.removeItem('profitnet_user');
+      // Load user from localStorage on app start
+      const storedUser = localStorage.getItem('profitnet_user');
+      if (storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          const updated = processDailyReturns(parsedUser);
+          setUser(updated);
+        } catch (error) {
+          console.error('Error parsing stored user:', error);
+          localStorage.removeItem('profitnet_user');
+        }
       }
-    }
-    setIsLoading(false);
+      setIsLoading(false);
+    };
+
+    initializeAuth();
   }, []);
-
-
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
+
     try {
       const users = JSON.parse(localStorage.getItem('profitnet_users') || '[]');
       const foundUser = users.find((u: any) => u.email === email && u.password === password);
-      
-      if (foundUser) {
-        // Remove password from user object before storing
-        const { password: _, ...userWithoutPassword } = foundUser;
-        const userToStore = userWithoutPassword as User;
-        
-        setUser(userToStore);
-        localStorage.setItem('profitnet_user', JSON.stringify(userToStore));
+
+      if (!foundUser) {
         setIsLoading(false);
-        return true;
+        return false; // User not found
       }
-      
+
+      // Role verification based on the login page
+      const path = window.location.pathname;
+      if (path.includes('/super-admin-login')) {
+        if (foundUser.role !== 'superadmin') {
+          setIsLoading(false);
+          return false; // Must be superadmin
+        }
+      } else if (path.includes('/admin-login')) {
+        if (foundUser.role !== 'admin') {
+          setIsLoading(false);
+          return false; // Must be admin
+        }
+      } else {
+        // This is a regular user login
+        if (foundUser.role !== 'user') {
+          setIsLoading(false);
+          return false; // Must be a user
+        }
+      }
+
+      // Successful login
+      const { password: _, ...userToStore } = foundUser;
+      setUser(userToStore as User);
+      localStorage.setItem('profitnet_user', JSON.stringify(userToStore));
       setIsLoading(false);
-      return false;
+      return true;
+
     } catch (error) {
       console.error('Login error:', error);
       setIsLoading(false);

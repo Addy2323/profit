@@ -12,6 +12,7 @@ interface UserLite {
   referralCode: string;
   referredBy?: string;
   createdAt: string | Date;
+  balance: number; // current account balance
 }
 
 interface TeamEntry extends UserLite {
@@ -26,17 +27,6 @@ const TeamPage: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'B' | 'C' | 'D'>('B');
 
-  // Fetch all stored users once. Convert to the lightweight structure we need.
-  const allUsers: UserLite[] = useMemo(() => {
-    const raw = JSON.parse(localStorage.getItem('profitnet_users') || '[]');
-    return raw.map((u: any) => ({
-      id: u.id,
-      phone: u.phone,
-      referralCode: u.referralCode,
-      referredBy: u.referredBy,
-      createdAt: u.createdAt,
-    }));
-  }, []);
 
   // Helper to format date like "03-06 11:17"
   const fmt = (d: Date) =>
@@ -48,6 +38,16 @@ const TeamPage: React.FC = () => {
   // Compute team data: levels B, C, D with commissions
   // ---------------------------------------------------------------------------
   const teamData = useMemo((): Record<'B' | 'C' | 'D', TeamEntry[]> => {
+    // Always pull the latest users list so that recent deposits made from another page are reflected
+    const raw: any[] = JSON.parse(localStorage.getItem('profitnet_users') || '[]');
+    const allUsers: UserLite[] = raw.map(u => ({
+      id: u.id,
+      phone: u.phone,
+      referralCode: u.referralCode,
+      referredBy: u.referredBy,
+      createdAt: u.createdAt,
+      balance: u.balance || 0,
+    }));
     if (!user) return { B: [], C: [], D: [] };
 
     const calcCommission = (member: UserLite, rate: number): TeamEntry => {
@@ -57,9 +57,12 @@ const TeamPage: React.FC = () => {
       const totalRecharge = txns
         .filter(t => t.type === 'recharge' && t.status === 'completed')
         .reduce((sum, t) => sum + (t.amount || 0), 0);
+      // If this user has no recharge transactions recorded in this browser (e.g., different device),
+      // fall back to their current balance as a proxy for first deposit so that commissions are not shown as 0.
+      const baseAmount = totalRecharge > 0 ? totalRecharge : member.balance;
       return {
         ...member,
-        commission: Math.round(totalRecharge * rate * 100) / 100, // round to 2dp
+        commission: Math.round(baseAmount * rate * 100) / 100, // round to 2dp
       };
     };
 
@@ -77,7 +80,7 @@ const TeamPage: React.FC = () => {
       C: levelC.map(u => calcCommission(u, 0.02)), // 2%
       D: levelD.map(u => calcCommission(u, 0.01)), // 1%
     };
-  }, [user, allUsers]);
+  }, [user]);
 
   if (!user) return null;
 
