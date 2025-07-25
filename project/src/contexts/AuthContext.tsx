@@ -165,7 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       const users = JSON.parse(localStorage.getItem('profitnet_users') || '[]');
-      const foundUser = users.find((u: any) => u.email === email && u.password === password);
+      const foundUser = users.find((u: any) => (u.email === email || u.phone === email) && u.password === password);
 
       if (!foundUser) {
         setIsLoading(false);

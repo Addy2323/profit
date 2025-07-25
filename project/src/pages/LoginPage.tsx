@@ -26,8 +26,8 @@ const LoginPage: React.FC = () => {
       return;
     }
 
-    const email = `${formData.mobile}@profitnet.tz`;
-    const success = await login(email, formData.password);
+
+    const success = await login(formData.mobile, formData.password);
     if (success) {
       navigate('/dashboard');
     } else {
