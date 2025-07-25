@@ -3,14 +3,15 @@ import { AuthProvider } from './contexts/AuthContext';
 import TawkChat from './components/TawkChat';
 import MobileLayout from './components/MobileLayout';
 import ProtectedRoute from './components/ProtectedRoute';
-import AdminLayout from './components/AdminLayout';
+import AdminLayout from './components/AdminLTELayout';
 import Dashboard from './pages/admin/Dashboard';
+import AppointmentsPage from './pages/admin/AppointmentsPage';
+import CategoriesPage from './pages/admin/CategoriesPage';
+import ServicesPage from './pages/admin/ServicesPage';
 
 
-import TransactionsPage from './pages/admin/TransactionsPage';
-import PurchasesPage from './pages/admin/PurchasesPage';
-import ProductsAdminPage from './pages/admin/ProductsAdminPage';
-import WithdrawPage from './pages/admin/WithdrawPage';
+
+
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import AdminLoginPage from './pages/AdminLoginPage';
@@ -66,12 +67,16 @@ function App() {
           <Route path="/admin/*" element={<ProtectedRoute adminOnly><AdminLayout /></ProtectedRoute>}>
             <Route index element={<Dashboard />} />
             <Route path="dashboard" element={<Dashboard />} />
+            <Route path="appointments" element={<AppointmentsPage />} />
+            <Route path="categories" element={<CategoriesPage />} />
+            <Route path="categories/new" element={<CategoriesPage />} />
+            <Route path="services" element={<ServicesPage />} />
+            <Route path="services/new" element={<ServicesPage />} />
+            <Route path="services/trash" element={<ServicesPage />} />
             <Route path="users" element={<ManageUsersPage />} />
-            <Route path="transactions" element={<TransactionsPage />} />
-            <Route path="purchases" element={<PurchasesPage />} />
-            <Route path="withdraw" element={<WithdrawPage />} />
-            <Route path="products" element={<ProductsAdminPage />} />
+            <Route path="transactions" element={<TransactionHistoryPage />} />
           </Route>
+
           <Route path="/" element={<MobileLayout />}>
             <Route index element={<HomePage />} />
             <Route

@@ -56,7 +56,7 @@ const DashboardPage: React.FC = () => {
             <Link
               key={index}
               to={item.path}
-              className="flex items-center justify-between bg-gray-800 rounded-xl p-4 hover:bg-gray-700 transition-colors"
+              className="flex items-center justify-between bg-gray-800 rounded-xl p-4 hover:bg-gray-700 transition-colors no-underline"
             >
               <div className="flex items-center space-x-3">
                 <div className={`w-8 h-8 bg-gradient-to-r ${item.color} rounded-lg flex items-center justify-center`}>

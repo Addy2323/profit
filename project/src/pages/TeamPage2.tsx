@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -23,7 +23,7 @@ interface TeamEntry extends UserLite {
 // Component
 // -----------------------------------------------------------------------------
 const TeamPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'B' | 'C' | 'D'>('B');
 
@@ -81,6 +81,43 @@ const TeamPage: React.FC = () => {
       D: levelD.map(u => calcCommission(u, 0.01)), // 1%
     };
   }, [user]);
+
+  // ---------------------------------------------------------------------------
+  // Credit invite commissions to user's balance (B, C, D levels)
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (!user) return;
+
+    // Total commission across all levels
+    const totalCommission = Object.values(teamData)
+      .flat()
+      .reduce((sum, entry) => sum + (entry.commission || 0), 0);
+
+    const txKey = `transactions_${user.id}`;
+    const txns: any[] = JSON.parse(localStorage.getItem(txKey) || '[]');
+
+    // Commission already credited so far
+    const credited = txns
+      .filter(t => t.type === 'invite_commission')
+      .reduce((s, t) => s + (t.amount || 0), 0);
+
+    const diff = totalCommission - credited;
+    if (diff > 0) {
+      // Update user balance
+      updateUser({ balance: (user.balance || 0) + diff });
+
+      // Record transaction
+      txns.push({
+        id: Date.now().toString(),
+        userId: user.id,
+        type: 'invite_commission',
+        amount: diff,
+        status: 'completed',
+        createdAt: new Date(),
+      });
+      localStorage.setItem(txKey, JSON.stringify(txns));
+    }
+  }, [teamData, user, updateUser]);
 
   if (!user) return null;
 

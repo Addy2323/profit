@@ -29,7 +29,7 @@ const BottomNavigation: React.FC = () => {
             <Link
               key={path}
               to={path}
-              className={`flex flex-col items-center py-2 px-4 ${
+              className={`flex flex-col items-center py-2 px-4 no-underline ${
                 isActive ? 'text-yellow-400' : 'text-gray-400'
               }`}
             >

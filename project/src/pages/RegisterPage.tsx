@@ -41,7 +41,7 @@ const RegisterPage: React.FC = () => {
     const email = `${mobile}@profitnet.tz`;
     const success = await register({ name, phone: mobile, email, password, referredBy: invitationCode });
     if (success) {
-      navigate('/dashboard');
+      navigate('/login');
     } else {
       setError('Registration failed — user may already exist');
     }
@@ -82,7 +82,7 @@ const RegisterPage: React.FC = () => {
               id="mobile"
               name="mobile"
               type="tel"
-              placeholder="e.g. 0712345678"
+              placeholder="e.g. +255712345678"
               className="w-full bg-gray-900/80 focus:bg-gray-900 text-white rounded px-4 py-3 outline-none"
               value={formData.mobile}
               onChange={handleChange}
