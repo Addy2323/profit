@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import UserFormModal from '../../components/UserFormModal';
+import { showSuccessAlert, showErrorAlert } from '../../utils/alertUtils';
 
 const ManageAdminsPage: React.FC = () => {
   const [admins, setAdmins] = useState<any[]>([]);
@@ -26,6 +27,7 @@ const ManageAdminsPage: React.FC = () => {
     localStorage.setItem('profitnet_users', JSON.stringify(updatedUsers));
     setAdmins(updatedUsers.filter((u: any) => u.role === 'admin'));
     setIsModalOpen(false);
+    showSuccessAlert(`Admin ${newAdmin.name} has been added successfully!`);
   };
 
   const handleEditAdmin = (formData: any) => {
@@ -43,6 +45,7 @@ const ManageAdminsPage: React.FC = () => {
     localStorage.setItem('profitnet_users', JSON.stringify(updatedUsers));
     setAdmins(updatedUsers.filter((u: any) => u.role === 'admin'));
     closeModal();
+    showSuccessAlert(`Admin ${formData.name} has been updated successfully!`);
   };
 
   const closeModal = () => {
@@ -56,7 +59,7 @@ const ManageAdminsPage: React.FC = () => {
       const updatedUsers = allUsers.filter((u: any) => u.id !== adminId);
       localStorage.setItem('profitnet_users', JSON.stringify(updatedUsers));
       setAdmins(updatedUsers.filter((u: any) => u.role === 'admin'));
-      alert('Admin deleted successfully.');
+      showSuccessAlert('Admin has been deleted successfully.');
     }
   };
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { showErrorAlert } from '../../utils/alertUtils';
 
 const SuperAdminLoginPage: React.FC = () => {
   const { login } = useAuth();
@@ -14,15 +15,20 @@ const SuperAdminLoginPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    
+    if (!email || !password) {
+      showErrorAlert('Please enter both email and password.');
+      return;
+    }
+    
     setLoading(true);
     const success = await login(email, password);
     setLoading(false);
 
     if (success) {
       navigate('/super-admin');
-    } else {
-      setError('Invalid credentials. Please try again.');
     }
+    // Error handling is now done in AuthContext with alerts
   };
 
   return (

@@ -2,26 +2,28 @@ import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
-  CalendarIcon,
-  FolderIcon,
   UsersIcon,
   CogIcon,
   UserCircleIcon,
-  PlusIcon,
-  EyeIcon,
-  TrashIcon,
   ArrowRightOnRectangleIcon,
   Bars3Icon,
   ChevronRightIcon,
   ChartBarIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  CurrencyDollarIcon,
+  BanknotesIcon,
+  DocumentTextIcon,
+  ArrowTrendingUpIcon,
+  ClockIcon,
+  CreditCardIcon,
+  PresentationChartLineIcon
 } from '@heroicons/react/24/outline';
 
 const AdminLTELayout: React.FC = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [categoriesOpen, setCategoriesOpen] = useState(false);
-  const [servicesOpen, setServicesOpen] = useState(true);
-  const { logout } = useAuth();
+  const [investmentOpen, setInvestmentOpen] = useState(true);
+  const [transactionOpen, setTransactionOpen] = useState(false);
+  const { logout, user } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -45,8 +47,8 @@ const AdminLTELayout: React.FC = () => {
             </div>
             {!sidebarCollapsed && (
               <div>
-                <h1 className="font-bold text-xl text-gray-800">AdminPanel</h1>
-                <p className="text-xs text-gray-500">Management System</p>
+                <h1 className="font-bold text-xl text-gray-800">Investment Hub</h1>
+                <p className="text-xs text-gray-500">Daily Income Management</p>
               </div>
             )}
           </div>
@@ -71,107 +73,97 @@ const AdminLTELayout: React.FC = () => {
             {!sidebarCollapsed && <span className="font-medium">Dashboard</span>}
           </NavLink>
 
-          {/* All Appointments */}
-          <NavLink
-            to="/admin/appointments"
-            className={({ isActive }) =>
-              `flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 no-underline ${
-                isActive
-                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
-                  : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600'
-              } ${
-                sidebarCollapsed ? 'justify-center' : ''
-              }`
-            }
-          >
-            <CalendarIcon className="h-5 w-5" />
-            {!sidebarCollapsed && <span className="font-medium">All Appointments</span>}
-          </NavLink>
-
-          {/* Categories */}
+          {/* Investment Management */}
           {!sidebarCollapsed && (
             <div>
               <div
                 className="flex items-center justify-between px-4 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-xl cursor-pointer transition-all duration-200"
-                onClick={() => setCategoriesOpen(!categoriesOpen)}
+                onClick={() => setInvestmentOpen(!investmentOpen)}
               >
                 <div className="flex items-center space-x-3">
-                  <FolderIcon className="h-5 w-5" />
-                  <span className="font-medium">Categories</span>
+                  <ArrowTrendingUpIcon className="h-5 w-5" />
+                  <span className="font-medium">Investment Plans</span>
                 </div>
-                {categoriesOpen ? (
+                {investmentOpen ? (
                   <ChevronDownIcon className="h-4 w-4" />
                 ) : (
                   <ChevronRightIcon className="h-4 w-4" />
                 )}
               </div>
-              {categoriesOpen && (
+              {investmentOpen && (
                 <div className="ml-8 space-y-1">
                   <NavLink
-                    to="/admin/categories/new"
+                    to="/admin/investments/create"
                     className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 no-underline"
                   >
-                    <PlusIcon className="h-4 w-4" />
-                    <span>Add New</span>
+                    <CurrencyDollarIcon className="h-4 w-4" />
+                    <span>Create Plan</span>
                   </NavLink>
                   <NavLink
-                    to="/admin/categories"
+                    to="/admin/investments"
                     className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 no-underline"
                   >
-                    <EyeIcon className="h-4 w-4" />
-                    <span>View All</span>
+                    <PresentationChartLineIcon className="h-4 w-4" />
+                    <span>Manage Plans</span>
+                  </NavLink>
+                  <NavLink
+                    to="/admin/daily-returns"
+                    className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 no-underline"
+                  >
+                    <ClockIcon className="h-4 w-4" />
+                    <span>Daily Returns</span>
                   </NavLink>
                 </div>
               )}
             </div>
           )}
 
-          {/* Services */}
+          {/* Transaction Management */}
           {!sidebarCollapsed && (
             <div>
-              <NavLink
-                to="/admin/services"
-                className={({ isActive }) =>
-                  `flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all duration-200 no-underline ${
-                    isActive
-                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
-                      : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600'
-                  }`
-                }
-                onClick={() => setServicesOpen(!servicesOpen)}
+              <div
+                className="flex items-center justify-between px-4 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-xl cursor-pointer transition-all duration-200"
+                onClick={() => setTransactionOpen(!transactionOpen)}
               >
                 <div className="flex items-center space-x-3">
-                  <CogIcon className="h-5 w-5" />
-                  <span className="font-medium">Services</span>
+                  <BanknotesIcon className="h-5 w-5" />
+                  <span className="font-medium">Transactions</span>
                 </div>
-                {servicesOpen ? (
+                {transactionOpen ? (
                   <ChevronDownIcon className="h-4 w-4" />
                 ) : (
                   <ChevronRightIcon className="h-4 w-4" />
                 )}
-              </NavLink>
-              {servicesOpen && (
-                <div className="ml-8 space-y-1 mt-2">
+              </div>
+              {transactionOpen && (
+                <div className="ml-8 space-y-1">
                   <NavLink
-                    to="/admin/services/new"
-                    className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                    to="/admin/transactions"
+                    className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 no-underline"
                   >
-                    <PlusIcon className="h-4 w-4" />
-                    <span>Create Service</span>
+                    <DocumentTextIcon className="h-4 w-4" />
+                    <span>All Transactions</span>
                   </NavLink>
                   <NavLink
-                    to="/admin/services"
-                    className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                    to="/admin/withdrawals"
+                    className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 no-underline"
                   >
-                    <EyeIcon className="h-4 w-4" />
-                    <span>View All</span>
+                    <CreditCardIcon className="h-4 w-4" />
+                    <span>Withdrawals</span>
                   </NavLink>
                   <NavLink
-                    to="/admin/services/trash"
-                    className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                    to="/admin/recharge-log"
+                    className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 no-underline"
                   >
-                    <TrashIcon className="h-4 w-4" />
-                    <span>View Trash</span>
+                    <CurrencyDollarIcon className="h-4 w-4" />
+                    <span>Recharge Log</span>
+                  </NavLink>
+                  <NavLink
+                    to="/admin/payment-system"
+                    className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 no-underline"
+                  >
+                    <CreditCardIcon className="h-4 w-4" />
+                    <span>🚀 Payment System</span>
                   </NavLink>
                 </div>
               )}

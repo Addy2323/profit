@@ -16,7 +16,7 @@ import {
 import InvitationCard from '../components/InvitationCard';
 
 const DashboardPage: React.FC = () => {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -49,6 +49,48 @@ const DashboardPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
+      {/* User Info Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-white">Welcome, {user?.name}</h1>
+            <p className="text-blue-100 text-sm">Your financial dashboard</p>
+          </div>
+          <div className="text-right">
+            <p className="text-blue-100 text-sm">Current Balance</p>
+            <p className="text-2xl font-bold text-white">TSh {user?.balance?.toLocaleString() || '0'}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="px-4 mb-6">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-gray-800 rounded-xl p-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-gray-400 text-sm">Total Earnings</p>
+                <p className="text-white font-bold">TSh {user?.balance?.toLocaleString() || '0'}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-gray-800 rounded-xl p-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                <TrendingDown className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-gray-400 text-sm">Referral Code</p>
+                <p className="text-white font-bold">{user?.referralCode || 'N/A'}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Menu Items */}
       <div className="px-4 py-6 space-y-3">
         {menuItems.map((item, index) => (

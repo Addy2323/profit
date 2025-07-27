@@ -9,6 +9,9 @@ export interface User {
   referralCode: string;
   referredBy?: string;
   isActive: boolean;
+  failedTransactionAttempts?: number;
+  lastFailedAttempt?: Date;
+  isBlocked?: boolean;
   createdAt: Date;
 }
 

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UserFormModal from '../../components/UserFormModal';
+import { debugUsers } from '../../utils/debugUsers';
+import { showSuccessAlert, showErrorAlert } from '../../utils/alertUtils';
 
 const ManageUsersPage: React.FC = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -11,9 +13,13 @@ const ManageUsersPage: React.FC = () => {
     setEditingUser(null);
   };
 
-  useEffect(() => {
+  const refreshUsers = () => {
     const allUsers = JSON.parse(localStorage.getItem('profitnet_users') || '[]');
     setUsers(allUsers.filter((u: any) => u.role === 'user'));
+  };
+
+  useEffect(() => {
+    refreshUsers();
   }, []);
 
   const handleAddUser = (formData: any) => {
@@ -29,8 +35,9 @@ const ManageUsersPage: React.FC = () => {
     };
     const updatedUsers = [...allUsers, newUser];
     localStorage.setItem('profitnet_users', JSON.stringify(updatedUsers));
-    setUsers(updatedUsers.filter((u: any) => u.role === 'user'));
+    refreshUsers();
     setIsModalOpen(false);
+    showSuccessAlert(`User ${newUser.name} has been added successfully!`);
   };
 
   const handleEditUser = (formData: any) => {
@@ -46,8 +53,9 @@ const ManageUsersPage: React.FC = () => {
       return u;
     });
     localStorage.setItem('profitnet_users', JSON.stringify(updatedUsers));
-    setUsers(updatedUsers.filter((u: any) => u.role === 'user'));
+    refreshUsers();
     closeModal();
+    showSuccessAlert(`User ${formData.name} has been updated successfully!`);
   };
 
   const handleDeleteUser = (userId: string) => {
@@ -55,8 +63,8 @@ const ManageUsersPage: React.FC = () => {
       const allUsers = JSON.parse(localStorage.getItem('profitnet_users') || '[]');
       const updatedUsers = allUsers.filter((u: any) => u.id !== userId);
       localStorage.setItem('profitnet_users', JSON.stringify(updatedUsers));
-      setUsers(updatedUsers.filter((u: any) => u.role === 'user'));
-      alert('User deleted successfully.');
+      refreshUsers();
+      showSuccessAlert('User has been deleted successfully.');
     }
   };
 
@@ -64,15 +72,23 @@ const ManageUsersPage: React.FC = () => {
     <div className="text-white">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-red-500">Manage Users</h1>
-        <button 
-          onClick={() => {
-            setEditingUser(null);
-            setIsModalOpen(true);
-          }}
-          className="bg-green-600 px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition-all duration-300"
-        >
-          Add New User
-        </button>
+        <div className="flex space-x-3">
+          <button 
+            onClick={() => debugUsers()}
+            className="bg-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-all duration-300"
+          >
+            🐛 Debug Users
+          </button>
+          <button 
+            onClick={() => {
+              setEditingUser(null);
+              setIsModalOpen(true);
+            }}
+            className="bg-green-600 px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition-all duration-300"
+          >
+            Add New User
+          </button>
+        </div>
       </div>
       <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
         <table className="w-full text-left">

@@ -1,4 +1,6 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -18,6 +20,10 @@ import {
   CurrencyDollarIcon,
   ArrowUpIcon,
   ArrowDownIcon,
+  PlusIcon,
+  CogIcon,
+  DocumentTextIcon,
+  ChartBarIcon,
 } from '@heroicons/react/24/outline';
 
 // Register Chart.js components
@@ -81,13 +87,47 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, subtitle, icon: I
 };
 
 const Dashboard: React.FC = () => {
-  // Chart data for Deals Analytics
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  // Quick action items for admin
+  const quickActions = [
+    {
+      title: 'Create Investment Plan',
+      description: 'Add new investment opportunity',
+      icon: PlusIcon,
+      color: 'bg-blue-500',
+      action: () => navigate('/admin/investments/create')
+    },
+    {
+      title: 'Manage Users',
+      description: 'View and manage user accounts',
+      icon: UsersIcon,
+      color: 'bg-green-500',
+      action: () => navigate('/admin/users')
+    },
+    {
+      title: 'Daily Returns',
+      description: 'Monitor daily income distribution',
+      icon: ChartBarIcon,
+      color: 'bg-purple-500',
+      action: () => navigate('/admin/daily-returns')
+    },
+    {
+      title: 'Withdrawals',
+      description: 'Process withdrawal requests',
+      icon: CogIcon,
+      color: 'bg-orange-500',
+      action: () => navigate('/admin/withdrawals')
+    }
+  ];
+  // Chart data for Investment Analytics
   const chartData = {
     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
     datasets: [
       {
-        label: 'Deals',
-        data: [65, 75, 70, 80, 75, 85, 80, 90, 85, 95, 90, 100],
+        label: 'Investment Growth (TSh Millions)',
+        data: [1.2, 1.8, 2.1, 2.5, 2.3, 2.9, 3.2, 3.8, 4.1, 4.5, 4.8, 5.2],
         borderColor: 'rgb(59, 130, 246)',
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
         borderWidth: 2,
@@ -156,72 +196,96 @@ const Dashboard: React.FC = () => {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 flex items-center">
               <div className="w-8 h-8 bg-blue-500 rounded mr-3 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">A</span>
+                <span className="text-white font-bold text-sm">{user?.name?.charAt(0) || 'A'}</span>
               </div>
-              Dashboard
+              {user?.role === 'superadmin' ? 'Super Admin Dashboard' : 'Admin Dashboard'}
             </h1>
-            <p className="text-gray-600 mt-1">Welcome to your admin dashboard</p>
+            <p className="text-gray-600 mt-1">Welcome back, {user?.name}! Here's what's happening with your business today.</p>
           </div>
-          <div className="flex items-center space-x-2 text-sm text-gray-500">
-            <span>🏠</span>
-            <span>/</span>
-            <span>Dashboard</span>
+          <div className="flex items-center space-x-3">
+            <span className="text-sm text-gray-500">Balance: <span className="font-semibold text-green-600">TSh {user?.balance?.toLocaleString() || '0'}</span></span>
+            <button 
+              onClick={() => navigate('/admin/investments/create')}
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              New Investment Plan
+            </button>
           </div>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {quickActions.map((action, index) => (
+            <button
+              key={index}
+              onClick={action.action}
+              className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all hover:border-blue-300 text-left group"
+            >
+              <div className="flex items-center space-x-3">
+                <div className={`w-10 h-10 ${action.color} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                  <action.icon className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-900 group-hover:text-blue-600">{action.title}</h3>
+                  <p className="text-sm text-gray-500">{action.description}</p>
+                </div>
+              </div>
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard
-          title="Impressions"
-          value="1,563"
-          subtitle="May 23 - June 01 (2017)"
-          icon={EyeIcon}
+          title="Total Investments"
+          value="TSh 2,450,000"
+          subtitle="Active investments"
+          icon={CurrencyDollarIcon}
           color="blue"
-          trend={{ value: "+12.5%", isUp: true }}
+          trend={{ value: "+18.5%", isUp: true }}
         />
         <MetricCard
-          title="Goal"
-          value="30,564"
-          subtitle="May 23 - June 01 (2017)"
+          title="Daily Returns Paid"
+          value="TSh 125,400"
+          subtitle="Today's distribution"
           icon={TrophyIcon}
           color="green"
-          trend={{ value: "+8.2%", isUp: true }}
+          trend={{ value: "+12.3%", isUp: true }}
         />
         <MetricCard
-          title="Total Users"
-          value="8,426"
-          subtitle="Active users this month"
+          title="Active Investors"
+          value="847"
+          subtitle="Total users investing"
           icon={UsersIcon}
           color="purple"
-          trend={{ value: "-2.1%", isUp: false }}
+          trend={{ value: "+5.2%", isUp: true }}
         />
         <MetricCard
-          title="Revenue"
-          value="$45,280"
-          subtitle="Total earnings this month"
-          icon={CurrencyDollarIcon}
+          title="Pending Withdrawals"
+          value="TSh 89,500"
+          subtitle="Awaiting approval"
+          icon={EyeIcon}
           color="orange"
-          trend={{ value: "+15.3%", isUp: true }}
+          trend={{ value: "-3.1%", isUp: false }}
         />
       </div>
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Deals Analytics Chart */}
+        {/* Investment Growth Analytics */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-gray-900">Deals Analytics</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Investment Growth Analytics</h2>
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-500">JS chart by amCharts</span>
-              <button className="text-gray-400 hover:text-gray-600">
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                </svg>
-              </button>
+              <span className="text-sm text-gray-500">Last 12 months</span>
+              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
             </div>
           </div>
-          <div className="h-64">
+          <div className="h-80">
             <Line data={chartData} options={chartOptions} />
           </div>
           <div className="mt-4 flex items-center justify-center">
@@ -237,32 +301,32 @@ const Dashboard: React.FC = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div>
-                <p className="text-sm font-medium text-gray-900">New Orders</p>
+                <p className="text-sm font-medium text-gray-900">New Investments</p>
                 <p className="text-xs text-gray-500">Last 24 hours</p>
               </div>
               <div className="text-right">
-                <p className="text-lg font-bold text-gray-900">156</p>
-                <p className="text-xs text-green-600">+23%</p>
+                <p className="text-lg font-bold text-gray-900">42</p>
+                <p className="text-xs text-green-600">+18%</p>
               </div>
             </div>
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div>
-                <p className="text-sm font-medium text-gray-900">Pending Reviews</p>
+                <p className="text-sm font-medium text-gray-900">Pending Withdrawals</p>
                 <p className="text-xs text-gray-500">Awaiting approval</p>
               </div>
               <div className="text-right">
-                <p className="text-lg font-bold text-gray-900">23</p>
+                <p className="text-lg font-bold text-gray-900">15</p>
                 <p className="text-xs text-orange-600">Action needed</p>
               </div>
             </div>
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div>
-                <p className="text-sm font-medium text-gray-900">Support Tickets</p>
-                <p className="text-xs text-gray-500">Open tickets</p>
+                <p className="text-sm font-medium text-gray-900">Returns Processed</p>
+                <p className="text-xs text-gray-500">Today</p>
               </div>
               <div className="text-right">
-                <p className="text-lg font-bold text-gray-900">8</p>
-                <p className="text-xs text-red-600">High priority</p>
+                <p className="text-lg font-bold text-gray-900">847</p>
+                <p className="text-xs text-green-600">Completed</p>
               </div>
             </div>
           </div>
@@ -278,8 +342,8 @@ const Dashboard: React.FC = () => {
               <UsersIcon className="w-5 h-5 text-blue-600" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium text-gray-900">New user registered</p>
-              <p className="text-xs text-gray-500">john.doe@example.com joined the platform</p>
+              <p className="text-sm font-medium text-gray-900">New investor joined</p>
+              <p className="text-xs text-gray-500">sarah.wilson@example.com started investing</p>
             </div>
             <span className="text-xs text-gray-400">2 min ago</span>
           </div>
@@ -288,8 +352,8 @@ const Dashboard: React.FC = () => {
               <CurrencyDollarIcon className="w-5 h-5 text-green-600" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium text-gray-900">Payment received</p>
-              <p className="text-xs text-gray-500">$250.00 from subscription renewal</p>
+              <p className="text-sm font-medium text-gray-900">Investment received</p>
+              <p className="text-xs text-gray-500">TSh 150,000 in Premium Plan</p>
             </div>
             <span className="text-xs text-gray-400">5 min ago</span>
           </div>
@@ -298,8 +362,8 @@ const Dashboard: React.FC = () => {
               <TrophyIcon className="w-5 h-5 text-orange-600" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium text-gray-900">Goal achieved</p>
-              <p className="text-xs text-gray-500">Monthly sales target reached</p>
+              <p className="text-sm font-medium text-gray-900">Daily returns processed</p>
+              <p className="text-xs text-gray-500">847 investors received their daily income</p>
             </div>
             <span className="text-xs text-gray-400">1 hour ago</span>
           </div>

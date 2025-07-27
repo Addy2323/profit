@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { showErrorAlert } from '../utils/alertUtils';
 
 const AdminLoginPage: React.FC = () => {
   const { login } = useAuth();
@@ -14,19 +15,20 @@ const AdminLoginPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    
+    if (!email || !password) {
+      showErrorAlert('Please enter both email and password.');
+      return;
+    }
+    
     setLoading(true);
     const success = await login(email, password);
     setLoading(false);
-    if (!success) {
-      setError('Invalid credentials');
-      return;
+    
+    if (success) {
+      navigate('/admin');
     }
-    const user = JSON.parse(localStorage.getItem('profitnet_user') || 'null');
-    if (user?.role !== 'admin') {
-      setError('You are not an administrator.');
-      return;
-    }
-    navigate('/admin');
+    // Error handling is now done in AuthContext with alerts
   };
 
   return (

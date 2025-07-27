@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { showSuccessAlert, showErrorAlert } from '../utils/alertUtils';
 
 const WithdrawalPage: React.FC = () => {
   const navigate = useNavigate();
@@ -9,21 +10,20 @@ const WithdrawalPage: React.FC = () => {
   const [amount, setAmount] = useState('');
   const [error, setError] = useState('');
 
-
   const handleWithdraw = () => {
     const numericAmount = Number(amount);
     const balance = user?.balance ?? 0;
 
     if (!amount || isNaN(numericAmount) || numericAmount <= 0) {
-      setError('Please enter a valid amount.');
+      showErrorAlert('Please enter a valid withdrawal amount.');
       return;
     }
     if (numericAmount < 3000) {
-      setError('Minimum withdrawal is 3,000 TZS.');
+      showErrorAlert('Minimum withdrawal amount is 3,000 TZS. Please enter a higher amount.');
       return;
     }
     if (numericAmount > balance) {
-      setError('Insufficient balance.');
+      showErrorAlert(`Insufficient balance. Your current balance is ${balance.toLocaleString()} TZS.`);
       return;
     }
 
@@ -57,7 +57,7 @@ const WithdrawalPage: React.FC = () => {
     localStorage.setItem(`transactions_${user?.id}`, JSON.stringify(existing));
 
     setError('');
-    alert('Withdrawal request submitted and pending admin approval.');
+    showSuccessAlert(`Withdrawal request for ${numericAmount.toLocaleString()} TZS submitted successfully! Your request is pending admin approval and will be processed soon.`);
     navigate('/withdrawal-log');
   };
 

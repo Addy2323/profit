@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { ArrowLeft, Copy, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { AutoPaymentService } from '../services/AutoPaymentService';
+import { showSuccessAlert, showErrorAlert, showInfoAlert } from '../utils/alertUtils';
 
 const RechargePage: React.FC = () => {
   const navigate = useNavigate();
@@ -11,43 +13,74 @@ const RechargePage: React.FC = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [transactionMessage, setTransactionMessage] = useState('');
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
+  const [validationStatus, setValidationStatus] = useState<string>('');
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const networks = [
-    { id: 'vodacom', name: 'Vodacom', number: '+255765123456' },
-    { id: 'tigo', name: 'Tigo', number: '+255654321098' },
-    { id: 'airtel', name: 'Airtel', number: '+255743210987' },
-    { id: 'halotel', name: 'Halotel', number: '+255623456789' },
-  ];
+  const paymentNumbers = AutoPaymentService.getPaymentNumbers();
 
-  const selectedNetworkData = networks.find(n => n.id === selectedNetwork);
+  const selectedPaymentNumber = paymentNumbers.find(n => n.network === selectedNetwork);
 
   const handlePayment = () => {
     setShowPaymentModal(true);
   };
 
-  const handleUpload = () => {
-    if (transactionMessage.trim() || uploadedImage) {
-      // Simulate successful recharge
+  const handleUpload = async () => {
+    if (!transactionMessage.trim()) {
+      setValidationStatus('Please enter your transaction ID');
+      showErrorAlert('Please enter your transaction ID to confirm payment.');
+      return;
+    }
+
+    setIsProcessing(true);
+    setValidationStatus('Processing transaction...');
+
+    try {
+      const transactionId = transactionMessage.trim();
       const rechargeAmount = parseFloat(amount);
-      updateUser({ balance: (user?.balance || 0) + rechargeAmount });
-      
-      // Add transaction to history
-      const transaction = {
-        id: Date.now().toString(),
-        userId: user?.id || '',
-        type: 'recharge' as const,
-        amount: rechargeAmount,
-        description: `Mobile money recharge via ${selectedNetworkData?.name}`,
-        status: 'completed' as const,
-        createdAt: new Date(),
-      };
-      
-      const existingTransactions = JSON.parse(localStorage.getItem(`transactions_${user?.id}`) || '[]');
-      existingTransactions.unshift(transaction);
-      localStorage.setItem(`transactions_${user?.id}`, JSON.stringify(existingTransactions));
-      
-      setShowPaymentModal(false);
-      navigate('/dashboard');
+
+      // Process transaction with AutoPaymentService
+      const result = await AutoPaymentService.processTransactionId(
+        transactionId,
+        rechargeAmount,
+        user?.id || '',
+        selectedNetwork
+      );
+
+      setValidationStatus(result.message);
+
+      if (result.success && result.transaction) {
+        // Auto-update user balance
+        const balanceUpdated = await AutoPaymentService.updateUserBalance(
+          user?.id || '',
+          rechargeAmount
+        );
+
+        if (balanceUpdated) {
+          // Update user context
+          updateUser({ 
+            balance: (user?.balance || 0) + rechargeAmount
+          });
+
+          setValidationStatus('✅ Payment confirmed! Balance updated successfully.');
+          showSuccessAlert(`Payment of ${rechargeAmount.toLocaleString()} TZS confirmed successfully! Your balance has been updated.`);
+          
+          setTimeout(() => {
+            setShowPaymentModal(false);
+            navigate('/dashboard');
+          }, 2000);
+        } else {
+          setValidationStatus('❌ Error updating balance. Please contact support.');
+          showErrorAlert('Error updating your balance. Please contact support for assistance.');
+        }
+      } else {
+        // Transaction validation failed
+        showErrorAlert(result.message || 'Transaction validation failed. Please check your transaction ID and try again.');
+      }
+    } catch (error) {
+      setValidationStatus('❌ Error processing transaction. Please try again.');
+      showErrorAlert('Error processing your transaction. Please check your internet connection and try again.');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -82,44 +115,76 @@ const RechargePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Network Selection */}
+        {/* Payment Numbers Selection */}
         <div className="mb-6">
-          <h3 className="text-white font-semibold mb-3">Select Network</h3>
-          <div className="grid grid-cols-2 gap-3">
-            {networks.map((network) => (
-              <button
-                key={network.id}
-                onClick={() => setSelectedNetwork(network.id)}
-                className={`p-3 rounded-lg border-2 transition-colors ${
-                  selectedNetwork === network.id
+          <h3 className="text-white font-semibold mb-3">Select Payment Number</h3>
+          <div className="space-y-3">
+            {paymentNumbers.map((paymentNum) => (
+              <div
+                key={paymentNum.id}
+                className={`p-4 rounded-lg border-2 transition-colors cursor-pointer ${
+                  selectedNetwork === paymentNum.network
                     ? 'border-orange-500 bg-orange-500/20'
                     : 'border-gray-600 bg-gray-800'
                 }`}
+                onClick={() => setSelectedNetwork(paymentNum.network)}
               >
-                <div className="text-white font-medium">{network.name}</div>
-              </button>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-white font-medium">{paymentNum.name}</div>
+                    <div className="text-orange-400 font-mono text-lg">{paymentNum.number}</div>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigator.clipboard.writeText(paymentNum.number);
+                      showSuccessAlert(`${paymentNum.network} number copied to clipboard!`);
+                    }}
+                    className="p-2 bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors"
+                  >
+                    <Copy className="w-4 h-4 text-white" />
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
         </div>
 
         {/* Payment Instructions */}
         <div className="bg-gray-800 rounded-xl p-4 mb-6">
-          <h3 className="text-white font-semibold mb-3">Payment Instructions</h3>
+          <h3 className="text-white font-semibold mb-3">🔄 Automatic Payment System</h3>
           <div className="space-y-2 text-sm text-gray-300">
-            <p>1. Minimum recharge amount: 30,000 TZS</p>
-            <p>2. When making a payment, please check the payment information carefully to avoid payment errors.</p>
-            <p>3. Copy and recharge, please use a new number in the payment account, and do not repeat the number.</p>
-            <p>4. After recharging, please wait patiently for 10-30 minutes.</p>
-            <p>5. If you still haven't received it after 30 minutes, please contact customer service.</p>
+            <p>✅ <strong>Step 1:</strong> Select one of the three payment numbers above</p>
+            <p>✅ <strong>Step 2:</strong> Copy the number and send money via mobile money</p>
+            <p>✅ <strong>Step 3:</strong> Enter your transaction ID below for instant confirmation</p>
+            <p>✅ <strong>Step 4:</strong> Your balance will be updated automatically within seconds!</p>
+            <div className="mt-3 p-3 bg-green-600/20 rounded-lg">
+              <p className="text-green-400 font-medium">💡 New Feature: Automatic balance updates!</p>
+              <p className="text-green-300 text-xs">No more waiting - your balance updates instantly after transaction confirmation.</p>
+            </div>
           </div>
         </div>
+
+        {/* Validation Status */}
+        {validationStatus && (
+          <div className={`mt-4 p-3 rounded-lg ${
+            validationStatus.includes('success') ? 'bg-green-600/20 text-green-400' : 
+            validationStatus.includes('blocked') ? 'bg-red-600/20 text-red-400' : 
+            'bg-yellow-600/20 text-yellow-400'
+          }`}>
+            {validationStatus}
+          </div>
+        )}
 
         {/* Payment Button */}
         <button
           onClick={handlePayment}
-          className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-4 rounded-xl font-semibold text-lg"
+          disabled={isProcessing || user?.isBlocked}
+          className={`w-full py-4 rounded-xl font-semibold text-lg ${
+            isProcessing || user?.isBlocked ? 'bg-gray-600 cursor-not-allowed' : 'bg-gradient-to-r from-orange-500 to-orange-600 text-white'
+          }`}
         >
-          Payment
+          {isProcessing ? 'Processing...' : 'Payment'}
         </button>
       </div>
 
@@ -128,7 +193,7 @@ const RechargePage: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">Upload</h3>
+              <h3 className="text-lg font-semibold text-white">🚀 Instant Payment Confirmation</h3>
               <button
                 onClick={() => setShowPaymentModal(false)}
                 className="text-gray-400 hover:text-white"
@@ -138,15 +203,16 @@ const RechargePage: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-300 mb-2">
-                  Please provide the following information to help us confirm your order:
+              <div className="bg-blue-600/20 rounded-lg p-3">
+                <p className="text-blue-400 font-medium mb-2">📱 Payment Instructions:</p>
+                <p className="text-sm text-blue-300 mb-1">
+                  1. Send TZS {amount} to: <span className="font-mono text-orange-400">{selectedPaymentNumber?.number}</span>
                 </p>
-                <p className="text-sm text-gray-300 mb-2">
-                  1. Enter the transaction code in your mobile phone text message.
+                <p className="text-sm text-blue-300 mb-1">
+                  2. Copy the transaction ID from your SMS confirmation
                 </p>
-                <p className="text-sm text-gray-300 mb-4">
-                  2. Upload a screenshot of the successful payment and wait patiently.
+                <p className="text-sm text-blue-300">
+                  3. Paste it below for instant balance update!
                 </p>
               </div>
 
@@ -159,38 +225,54 @@ const RechargePage: React.FC = () => {
               </div>
 
               <div>
-                <input
-                  type="text"
-                  placeholder="Enter your SMS transaction code"
-                  value={transactionMessage}
-                  onChange={(e) => setTransactionMessage(e.target.value)}
-                  className="w-full bg-gray-700 text-white p-3 rounded-lg border border-gray-600 focus:border-orange-500 focus:outline-none"
-                />
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  💳 Transaction ID (from SMS)
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="e.g., MP240127ABC123 or TG240127XYZ789"
+                    value={transactionMessage}
+                    onChange={(e) => setTransactionMessage(e.target.value)}
+                    className="w-full bg-gray-700 text-white p-3 pr-12 rounded-lg border border-gray-600 focus:border-orange-500 focus:outline-none font-mono"
+                  />
+                  {transactionMessage && (
+                    <CheckCircle className="absolute right-3 top-3 w-6 h-6 text-green-400" />
+                  )}
+                </div>
+                <p className="text-xs text-gray-400 mt-1">
+                  💡 Tip: Transaction IDs usually start with MP (Vodacom), TG (Tigo), or AT (Airtel)
+                </p>
               </div>
 
-              <div className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  id="image-upload"
-                />
-                <label htmlFor="image-upload" className="cursor-pointer">
-                  <div className="w-16 h-16 bg-gray-600 rounded-lg mx-auto mb-2 flex items-center justify-center">
-                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                  </div>
-                  <div className="text-gray-400 text-sm">Upload Image</div>
-                </label>
-              </div>
+              {/* Validation Status in Modal */}
+              {validationStatus && (
+                <div className={`p-3 rounded-lg text-sm ${
+                  validationStatus.includes('✅') ? 'bg-green-600/20 text-green-400' : 
+                  validationStatus.includes('❌') ? 'bg-red-600/20 text-red-400' : 
+                  'bg-yellow-600/20 text-yellow-400'
+                }`}>
+                  {validationStatus}
+                </div>
+              )}
 
               <button
                 onClick={handleUpload}
-                className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-3 rounded-lg font-semibold"
+                disabled={!transactionMessage.trim() || isProcessing}
+                className={`w-full py-3 rounded-lg font-semibold transition-all ${
+                  !transactionMessage.trim() || isProcessing
+                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700'
+                }`}
               >
-                UPLOAD
+                {isProcessing ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Processing...</span>
+                  </div>
+                ) : (
+                  '⚡ CONFIRM PAYMENT'
+                )}
               </button>
             </div>
           </div>

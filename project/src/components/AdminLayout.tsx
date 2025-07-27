@@ -9,12 +9,23 @@ import {
   BanknotesIcon,
   CubeIcon,
   ArrowLeftOnRectangleIcon,
+  ShieldCheckIcon,
+  ClockIcon,
+  ChartBarIcon,
+  DocumentTextIcon,
+  TrendingUpIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
 
 const navItems = [
   { path: '/admin', label: 'Dashboard', icon: HomeIcon },
   { path: '/admin/users', label: 'Users', icon: UsersIcon },
+  { path: '/admin/enhanced-users', label: 'Enhanced User Management', icon: UsersIcon },
+  { path: '/admin/investment-plans', label: 'Investment Plans', icon: CubeIcon },
+  { path: '/admin/fraud-prevention', label: 'Fraud Prevention', icon: ShieldCheckIcon },
+  { path: '/admin/withdrawal-queue', label: 'Withdrawal Queue', icon: ClockIcon },
+  { path: '/admin/revenue-insights', label: 'Revenue Insights', icon: TrendingUpIcon },
+  { path: '/admin/auto-reports', label: 'Auto Reports', icon: DocumentTextIcon },
   { path: '/admin/transactions', label: 'Transactions', icon: BanknotesIcon },
   { path: '/admin/purchases', label: 'Purchases', icon: ShoppingBagIcon },
   { path: '/admin/products', label: 'Products', icon: CubeIcon },

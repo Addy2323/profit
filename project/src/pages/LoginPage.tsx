@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Eye, EyeOff } from 'lucide-react';
+import { showErrorAlert } from '../utils/alertUtils';
 
 // Minimal login page: phone number + password only
 const LoginPage: React.FC = () => {
@@ -22,16 +23,13 @@ const LoginPage: React.FC = () => {
     setError('');
 
     if (!formData.mobile || !formData.password) {
-      setError('Both fields are required');
+      showErrorAlert('Both mobile number and password are required.');
       return;
     }
-
 
     const success = await login(formData.mobile, formData.password);
     if (success) {
       navigate('/dashboard');
-    } else {
-      setError('Login failed');
     }
   };
 

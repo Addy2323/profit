@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Eye, EyeOff } from 'lucide-react';
+import { showErrorAlert, showSuccessAlert } from '../utils/alertUtils';
 
 // Registration page – phone number, password + confirm password
 const RegisterPage: React.FC = () => {
@@ -29,21 +30,25 @@ const RegisterPage: React.FC = () => {
 
     const { name, mobile, password, confirmPassword, invitationCode } = formData;
     if (!name || !mobile || !password || !confirmPassword) {
-      setError('All fields are required');
+      showErrorAlert('All fields are required. Please fill in your name, mobile number, password, and confirm password.');
+      return;
+    }
+
+    if (password.length < 6) {
+      showErrorAlert('Password must be at least 6 characters long.');
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      showErrorAlert('Passwords do not match. Please check and try again.');
       return;
     }
 
     const email = `${mobile}@profitnet.tz`;
     const success = await register({ name, phone: mobile, email, password, referredBy: invitationCode });
     if (success) {
+      showSuccessAlert('Registration successful! You can now log in with your credentials.');
       navigate('/login');
-    } else {
-      setError('Registration failed — user may already exist');
     }
   };
 

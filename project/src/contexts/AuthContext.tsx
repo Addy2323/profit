@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { showSuccessAlert, showErrorAlert } from '../utils/alertUtils';
 import { User } from '../types';
+import { UserManagementService } from '../services/UserManagementService';
 
 interface AuthContextType {
   user: User | null;
@@ -138,23 +140,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const initializeAuth = () => {
-      // Always initialize with demo accounts for testing purposes.
+    // Initialize with demo accounts only if no users exist
+    const existingUsers = localStorage.getItem('profitnet_users');
+    if (!existingUsers) {
       localStorage.setItem('profitnet_users', JSON.stringify(demoAccounts));
-
-      // Load user from localStorage on app start
-      const storedUser = localStorage.getItem('profitnet_user');
-      if (storedUser) {
-        try {
-          const parsedUser = JSON.parse(storedUser);
-          const updated = processDailyReturns(parsedUser);
-          setUser(updated);
-        } catch (error) {
-          console.error('Error parsing stored user:', error);
-          localStorage.removeItem('profitnet_user');
+    } else {
+      // Ensure demo accounts exist in the user list (in case they were deleted)
+      try {
+        const users = JSON.parse(existingUsers);
+        let updated = false;
+        
+        // Check if each demo account exists, if not add it
+        demoAccounts.forEach(demoAccount => {
+          const exists = users.find((u: any) => u.id === demoAccount.id);
+          if (!exists) {
+            users.push(demoAccount);
+            updated = true;
+          }
+        });
+        
+        if (updated) {
+          localStorage.setItem('profitnet_users', JSON.stringify(users));
         }
+      } catch (error) {
+        console.error('Error parsing existing users:', error);
+        localStorage.setItem('profitnet_users', JSON.stringify(demoAccounts));
       }
-      setIsLoading(false);
-    };
+    }
+
+    // Initialize sample data for admin dashboard features
+    UserManagementService.initializeSampleData();
+
+    // Load user from localStorage on app start
+    const storedUser = localStorage.getItem('profitnet_user');
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        const updated = processDailyReturns(parsedUser);
+        setUser(updated);
+      } catch (error) {
+        console.error('Error parsing stored user:', error);
+        localStorage.removeItem('profitnet_user');
+      }
+    }
+    setIsLoading(false);
+  };
 
     initializeAuth();
   }, []);
@@ -169,6 +199,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (!foundUser) {
         setIsLoading(false);
+        showErrorAlert('Invalid email/phone or password. Please check your credentials.');
         return false; // User not found
       }
 
@@ -177,17 +208,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (path.includes('/super-admin-login')) {
         if (foundUser.role !== 'superadmin') {
           setIsLoading(false);
+          showErrorAlert('You must be a super admin to access this page.');
           return false; // Must be superadmin
         }
       } else if (path.includes('/admin-login')) {
         if (foundUser.role !== 'admin') {
           setIsLoading(false);
+          showErrorAlert('You must be an admin to access this page.');
           return false; // Must be admin
         }
       } else {
         // This is a regular user login
         if (foundUser.role !== 'user') {
           setIsLoading(false);
+          showErrorAlert('Please use the correct login page for your account type.');
           return false; // Must be a user
         }
       }
@@ -197,11 +231,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(userToStore as User);
       localStorage.setItem('profitnet_user', JSON.stringify(userToStore));
       setIsLoading(false);
+      showSuccessAlert(`Welcome back, ${userToStore.name}!`);
       return true;
 
     } catch (error) {
       console.error('Login error:', error);
       setIsLoading(false);
+      showErrorAlert('An unexpected error occurred during login. Please try again.');
       return false;
     }
   };
@@ -218,6 +254,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (existingUser) {
         setIsLoading(false);
+        showErrorAlert('An account with this email already exists. Please use a different email or try logging in.');
         return false;
       }
       
@@ -245,10 +282,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('profitnet_user', JSON.stringify(newUser));
       
       setIsLoading(false);
+      showSuccessAlert(`Welcome to ProfitNet, ${newUser.name}! Your account has been created successfully.`);
       return true;
     } catch (error) {
       console.error('Registration error:', error);
       setIsLoading(false);
+      showErrorAlert('An unexpected error occurred during registration. Please try again.');
       return false;
     }
   };

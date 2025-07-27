@@ -5,12 +5,17 @@ import MobileLayout from './components/MobileLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminLayout from './components/AdminLTELayout';
 import Dashboard from './pages/admin/Dashboard';
+import UnifiedDashboard from './pages/UnifiedDashboard';
 import AppointmentsPage from './pages/admin/AppointmentsPage';
 import CategoriesPage from './pages/admin/CategoriesPage';
 import ServicesPage from './pages/admin/ServicesPage';
-
-
-
+import PaymentSystemPage from './pages/admin/PaymentSystemPage';
+import InvestmentPlansPage from './pages/admin/InvestmentPlansPage';
+import EnhancedUserManagementPage from './pages/admin/EnhancedUserManagementPage';
+import FraudPreventionPage from './pages/admin/FraudPreventionPage';
+import WithdrawalQueuePage from './pages/admin/WithdrawalQueuePage';
+import RevenueInsightsPage from './pages/admin/RevenueInsightsPage';
+import AutoReportsPage from './pages/admin/AutoReportsPage';
 
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -67,14 +72,20 @@ function App() {
           <Route path="/admin/*" element={<ProtectedRoute adminOnly><AdminLayout /></ProtectedRoute>}>
             <Route index element={<Dashboard />} />
             <Route path="dashboard" element={<Dashboard />} />
-            <Route path="appointments" element={<AppointmentsPage />} />
-            <Route path="categories" element={<CategoriesPage />} />
-            <Route path="categories/new" element={<CategoriesPage />} />
-            <Route path="services" element={<ServicesPage />} />
-            <Route path="services/new" element={<ServicesPage />} />
-            <Route path="services/trash" element={<ServicesPage />} />
-            <Route path="users" element={<ManageUsersPage />} />
+            <Route path="investments" element={<ServicesPage />} />
+            <Route path="investments/create" element={<ServicesPage />} />
+            <Route path="investment-plans" element={<InvestmentPlansPage />} />
+            <Route path="enhanced-users" element={<EnhancedUserManagementPage />} />
+            <Route path="fraud-prevention" element={<FraudPreventionPage />} />
+            <Route path="withdrawal-queue" element={<WithdrawalQueuePage />} />
+            <Route path="revenue-insights" element={<RevenueInsightsPage />} />
+            <Route path="auto-reports" element={<AutoReportsPage />} />
+            <Route path="daily-returns" element={<TransactionHistoryPage />} />
             <Route path="transactions" element={<TransactionHistoryPage />} />
+            <Route path="withdrawals" element={<ManageWithdrawalsPage />} />
+            <Route path="recharge-log" element={<SuperAdminRechargeLogPage />} />
+            <Route path="payment-system" element={<PaymentSystemPage />} />
+            <Route path="users" element={<ManageUsersPage />} />
           </Route>
 
           <Route path="/" element={<MobileLayout />}>
@@ -91,7 +102,7 @@ function App() {
               path="dashboard"
               element={
                 <ProtectedRoute>
-                  <DashboardPage />
+                  <UnifiedDashboard />
                 </ProtectedRoute>
               }
             />
