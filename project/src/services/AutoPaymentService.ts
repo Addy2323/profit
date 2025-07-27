@@ -23,7 +23,7 @@ export class AutoPaymentService {
     {
       id: '1',
       network: 'vodacom',
-      number: '+255765123456',
+      number: '+255768828247',
       name: 'Investment Hub - Vodacom',
       isActive: true
     },
@@ -73,22 +73,43 @@ export class AutoPaymentService {
     transaction?: PaymentTransaction;
   }> {
     try {
-      // Validate transaction ID format
-      if (!transactionId || transactionId.length < 8) {
+      // Validate transaction ID format - accept M-Pesa format
+      if (!transactionId || transactionId.length < 8 || transactionId.length > 15) {
         return {
           success: false,
-          message: 'Invalid transaction ID format'
+          message: 'Invalid transaction ID format. Please enter a valid M-Pesa transaction ID.'
         };
       }
 
-      // Check if transaction ID already exists
+      // Check for valid characters (alphanumeric)
+      if (!/^[A-Za-z0-9]+$/.test(transactionId)) {
+        return {
+          success: false,
+          message: 'Transaction ID contains invalid characters. Only letters and numbers are allowed.'
+        };
+      }
+
+      // Check if transaction ID already exists or is similar (fraud prevention)
       const existingTransactions = JSON.parse(localStorage.getItem('processed_transactions') || '[]');
-      const duplicate = existingTransactions.find((t: PaymentTransaction) => t.transactionId === transactionId);
       
+      // Check for exact duplicate
+      const duplicate = existingTransactions.find((t: PaymentTransaction) => t.transactionId === transactionId);
       if (duplicate) {
         return {
           success: false,
           message: 'Transaction ID already processed'
+        };
+      }
+
+      // Check for similar transaction IDs (fraud prevention)
+      const suspiciousTransaction = this.detectSimilarTransactionId(transactionId, existingTransactions, userId);
+      if (suspiciousTransaction) {
+        // Log fraud attempt
+        this.logFraudAttempt(userId, transactionId, suspiciousTransaction.transactionId);
+        
+        return {
+          success: false,
+          message: 'Suspicious transaction detected. This transaction ID is too similar to a previously processed transaction. Please contact support if this is a legitimate transaction.'
         };
       }
 
@@ -142,27 +163,47 @@ export class AutoPaymentService {
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Simulate validation logic
-    // In real implementation, this would make actual API calls to mobile money providers
-    
-    // For demo purposes, we'll consider transaction valid if:
-    // 1. Transaction ID starts with network prefix
-    // 2. Amount is reasonable (> 0)
-    const networkPrefixes: { [key: string]: string } = {
-      'vodacom': 'MP',
-      'tigo': 'TG',
-      'airtel': 'AT',
-      'halotel': 'HL'
-    };
-
-    const expectedPrefix = networkPrefixes[network];
-    const hasValidPrefix = expectedPrefix ? transactionId.toUpperCase().startsWith(expectedPrefix) : true;
+    // Validate transaction ID format based on actual M-Pesa patterns
+    const isValidFormat = this.validateTransactionIdFormat(transactionId, network);
     const hasValidAmount = amount > 0;
 
-    // Simulate 90% success rate for valid-looking transactions
-    const randomSuccess = Math.random() > 0.1;
+    // For demo purposes, accept valid format transactions with 95% success rate
+    const randomSuccess = Math.random() > 0.05;
 
-    return hasValidPrefix && hasValidAmount && randomSuccess;
+    return isValidFormat && hasValidAmount && randomSuccess;
+  }
+
+  // Validate transaction ID format based on actual mobile money patterns
+  private static validateTransactionIdFormat(transactionId: string, network: string): boolean {
+    if (!transactionId || transactionId.length < 8) {
+      return false;
+    }
+
+    const upperTransactionId = transactionId.toUpperCase();
+
+    switch (network.toLowerCase()) {
+      case 'vodacom':
+        // M-Pesa transaction IDs can be:
+        // - Traditional format: MP followed by numbers (e.g., MP1234567890)
+        // - New format: Mixed alphanumeric (e.g., CED8I0O1NO8)
+        return /^(MP\d{10,}|[A-Z0-9]{8,12})$/.test(upperTransactionId);
+      
+      case 'tigo':
+        // Tigo Pesa format: Usually starts with TG or mixed alphanumeric
+        return /^(TG\d{8,}|[A-Z0-9]{8,12})$/.test(upperTransactionId);
+      
+      case 'airtel':
+        // Airtel Money format: Usually starts with AT or mixed alphanumeric
+        return /^(AT\d{8,}|[A-Z0-9]{8,12})$/.test(upperTransactionId);
+      
+      case 'halotel':
+        // Halotel format: Usually starts with HL or mixed alphanumeric
+        return /^(HL\d{8,}|[A-Z0-9]{8,12})$/.test(upperTransactionId);
+      
+      default:
+        // Generic validation for unknown networks
+        return /^[A-Z0-9]{8,12}$/.test(upperTransactionId);
+    }
   }
 
   // Auto-update user balance after successful payment
@@ -231,30 +272,5 @@ export class AutoPaymentService {
     } catch (error) {
       return false;
     }
-  }
-
-  // Admin methods for managing transactions
-  static confirmTransaction(transactionId: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      const transactions = this.getTransactionHistory();
-      const transactionIndex = transactions.findIndex(t => t.id === transactionId);
-      
-      if (transactionIndex !== -1) {
-        transactions[transactionIndex].status = 'confirmed';
-        localStorage.setItem('payment_transactions', JSON.stringify(transactions));
-        resolve(true);
-      } else {
-        resolve(false);
-      }
-    });
-  }
-
-  static getTransactionHistory(): PaymentTransaction[] {
-    const stored = localStorage.getItem('payment_transactions');
-    return stored ? JSON.parse(stored) : [];
-  }
-
-  static getPaymentNumbers(): PaymentNumber[] {
-    return this.PAYMENT_NUMBERS;
   }
 }
