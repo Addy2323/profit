@@ -203,6 +203,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false; // User not found
       }
 
+      // Check if user is blocked due to fraud attempts
+      if (foundUser.isBlocked) {
+        setIsLoading(false);
+        const blockReason = foundUser.blockReason || 'Account temporarily suspended';
+        showErrorAlert(`🚫 Account Blocked: ${blockReason}. Please contact administrator for assistance.`);
+        return false; // User is blocked
+      }
+
       // Role verification based on the login page
       const path = window.location.pathname;
       if (path.includes('/super-admin-login')) {
@@ -316,6 +324,65 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
   };
+
+  // Function to check if current user is blocked and auto-logout
+  const checkUserBlockStatus = () => {
+    if (user) {
+      try {
+        const users = JSON.parse(localStorage.getItem('profitnet_users') || '[]');
+        const currentUser = users.find((u: any) => u.id === user.id);
+        
+        if (currentUser && currentUser.isBlocked) {
+          // User has been blocked, force logout
+          setUser(null);
+          localStorage.removeItem('profitnet_user');
+          
+          const blockReason = currentUser.blockReason || 'Account temporarily suspended';
+          showErrorAlert(`🚫 Your account has been blocked: ${blockReason}. You have been logged out. Please contact administrator for assistance.`);
+          
+          // Redirect to login page
+          window.location.href = '/login';
+        }
+      } catch (error) {
+        console.error('Error checking user block status:', error);
+      }
+    }
+  };
+
+  // Check user block status periodically
+  useEffect(() => {
+    if (user) {
+      // Check immediately
+      checkUserBlockStatus();
+      
+      // Set up periodic checking every 30 seconds
+      const interval = setInterval(checkUserBlockStatus, 30000);
+      
+      // Listen for immediate user blocking events
+      const handleUserBlocked = (event: CustomEvent) => {
+        const { userId, reason } = event.detail;
+        if (user && user.id === userId) {
+          // User has been blocked, force immediate logout
+          setUser(null);
+          localStorage.removeItem('profitnet_user');
+          
+          showErrorAlert(`🚫 Your account has been blocked: ${reason}. You have been logged out. Please contact administrator for assistance.`);
+          
+          // Redirect to login page after a short delay
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 2000);
+        }
+      };
+      
+      window.addEventListener('userBlocked', handleUserBlocked as EventListener);
+      
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('userBlocked', handleUserBlocked as EventListener);
+      };
+    }
+  }, [user]);
 
   const value = {
     user,

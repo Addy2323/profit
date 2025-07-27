@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, CheckCircle, XCircle, DollarSign, User, Calendar, AlertTriangle } from 'lucide-react';
-import { UserManagementService } from '../../services/UserManagementService';
-import { WithdrawalRequest } from '../../types/UserManagement';
+import { Clock, CheckCircle, XCircle, DollarSign, User, Calendar, AlertTriangle, Phone as PhoneIcon } from 'lucide-react';
+import { AutoPaymentService, WithdrawalRequest } from '../../services/AutoPaymentService';
 import { showSuccessAlert, showErrorAlert } from '../../utils/alertUtils';
 
 const WithdrawalQueuePage: React.FC = () => {
@@ -30,7 +29,7 @@ const WithdrawalQueuePage: React.FC = () => {
   }, [withdrawalRequests, filterStatus]);
 
   const loadWithdrawalRequests = () => {
-    const requests = UserManagementService.getWithdrawalRequests();
+    const requests = AutoPaymentService.getWithdrawalRequests();
     setWithdrawalRequests(requests);
   };
 
@@ -72,27 +71,14 @@ const WithdrawalQueuePage: React.FC = () => {
   const handleApproveRequest = async () => {
     if (!selectedRequest) return;
 
-    const success = UserManagementService.updateWithdrawalRequest(selectedRequest.id, {
-      status: 'approved',
-      processedBy: 'admin', // In real app, get from auth context
-      processedAt: new Date().toISOString()
-    });
+    const result = AutoPaymentService.approveWithdrawal(selectedRequest.id, 'admin');
 
-    if (success) {
-      // Update user balance (deduct the withdrawal amount)
-      const users = JSON.parse(localStorage.getItem('profitnet_users') || '[]');
-      const userIndex = users.findIndex((u: any) => u.id === selectedRequest.userId);
-      
-      if (userIndex !== -1) {
-        users[userIndex].balance = (users[userIndex].balance || 0) - selectedRequest.amount;
-        localStorage.setItem('profitnet_users', JSON.stringify(users));
-      }
-
-      showSuccessAlert(`Withdrawal request for $${selectedRequest.amount} approved successfully.`);
+    if (result.success) {
+      showSuccessAlert(result.message);
       loadWithdrawalRequests();
       setShowDetailModal(false);
     } else {
-      showErrorAlert('Error approving withdrawal request.');
+      showErrorAlert(result.message);
     }
   };
 
@@ -104,19 +90,15 @@ const WithdrawalQueuePage: React.FC = () => {
       return;
     }
 
-    const success = UserManagementService.updateWithdrawalRequest(selectedRequest.id, {
-      status: 'rejected',
-      processedBy: 'admin',
-      processedAt: new Date().toISOString(),
-      rejectionReason
-    });
+    const result = AutoPaymentService.rejectWithdrawal(selectedRequest.id, rejectionReason, 'admin');
 
-    if (success) {
-      showSuccessAlert(`Withdrawal request rejected with reason: ${rejectionReason}`);
+    if (result.success) {
+      showSuccessAlert(result.message);
       loadWithdrawalRequests();
       setShowDetailModal(false);
+      setRejectionReason('');
     } else {
-      showErrorAlert('Error rejecting withdrawal request.');
+      showErrorAlert(result.message);
     }
   };
 
@@ -216,7 +198,7 @@ const WithdrawalQueuePage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-gray-600">Total Amount</p>
-              <p className="text-xl font-bold text-gray-900">${stats.totalAmount.toFixed(2)}</p>
+              <p className="text-xl font-bold text-gray-900">TZS {stats.totalAmount.toLocaleString()}</p>
             </div>
             <DollarSign className="text-gray-400" size={20} />
           </div>
@@ -226,7 +208,7 @@ const WithdrawalQueuePage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-gray-600">Pending Amount</p>
-              <p className="text-xl font-bold text-yellow-600">${stats.pendingAmount.toFixed(2)}</p>
+              <p className="text-xl font-bold text-yellow-600">TZS {stats.pendingAmount.toLocaleString()}</p>
             </div>
             <Clock className="text-yellow-400" size={20} />
           </div>
@@ -256,7 +238,7 @@ const WithdrawalQueuePage: React.FC = () => {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Request ID</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -270,28 +252,69 @@ const WithdrawalQueuePage: React.FC = () => {
                 const userBalance = getUserBalance(request.userId);
                 const hasInsufficientFunds = request.amount > userBalance;
                 
+                const getMethodName = (method: string) => {
+                  switch (method.toLowerCase()) {
+                    case 'vodacom':
+                    case 'mpesa':
+                    case 'm-pesa': return 'Vodacom M-Pesa';
+                    case 'tigo':
+                    case 'tigo pesa': return 'Tigo Pesa';
+                    case 'airtel':
+                    case 'airtel money': return 'Airtel Money';
+                    case 'bank': return 'Bank Transfer';
+                    case 'paypal': return 'PayPal';
+                    default: return method;
+                  }
+                };
+                
+                const getMethodColor = (method: string) => {
+                  switch (method.toLowerCase()) {
+                    case 'vodacom':
+                    case 'mpesa':
+                    case 'm-pesa': return 'text-red-600 bg-red-50';
+                    case 'tigo':
+                    case 'tigo pesa': return 'text-blue-600 bg-blue-50';
+                    case 'airtel':
+                    case 'airtel money': return 'text-orange-600 bg-orange-50';
+                    case 'bank': return 'text-green-600 bg-green-50';
+                    case 'paypal': return 'text-purple-600 bg-purple-50';
+                    default: return 'text-gray-600 bg-gray-50';
+                  }
+                };
+                
                 return (
                   <tr key={request.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <User className="text-gray-400" size={16} />
-                        <span className="text-sm font-medium text-gray-900">
+                      <div className="flex flex-col">
+                        <div className="text-sm font-mono text-gray-900">
+                          #{request.id.slice(-8).toUpperCase()}
+                        </div>
+                        <div className="text-xs text-gray-500 flex items-center mt-1">
+                          <User className="w-3 h-3 mr-1" />
                           {getUserName(request.userId)}
-                        </span>
+                        </div>
+                        {request.details?.phoneNumber && (
+                          <div className="text-xs text-gray-500 flex items-center mt-1">
+                            <PhoneIcon className="w-3 h-3 mr-1" />
+                            {request.details.phoneNumber}
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold text-gray-900">
-                          ${request.amount.toFixed(2)}
+                          TZS {request.amount.toLocaleString()}
                         </span>
                         {hasInsufficientFunds && request.status === 'pending' && (
                           <AlertTriangle className="text-red-500" size={16} title="Insufficient funds" />
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {request.method}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getMethodColor(request.method)}`}>
+                        {getMethodName(request.method)}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
@@ -309,7 +332,7 @@ const WithdrawalQueuePage: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`text-sm font-medium ${hasInsufficientFunds ? 'text-red-600' : 'text-green-600'}`}>
-                        ${userBalance.toFixed(2)}
+                        TZS {userBalance.toLocaleString()}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

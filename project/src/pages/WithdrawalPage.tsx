@@ -3,6 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { showSuccessAlert, showErrorAlert } from '../utils/alertUtils';
+import { AutoPaymentService } from '../services/AutoPaymentService';
 
 const WithdrawalPage: React.FC = () => {
   const navigate = useNavigate();
@@ -27,38 +28,34 @@ const WithdrawalPage: React.FC = () => {
       return;
     }
 
-    // Record withdrawal as a pending transaction and deduct balance immediately.
-    // Deduct balance
-    if(user){
-      const newBalance = (user.balance || 0) - numericAmount;
-      updateUser({balance:newBalance});
-      // also update in users list
-      try{
-        const users = JSON.parse(localStorage.getItem('profitnet_users') || '[]');
-        const idx = users.findIndex((u:any)=>u.id===user.id);
-        if(idx!==-1){
-          users[idx].balance = newBalance;
-          localStorage.setItem('profitnet_users',JSON.stringify(users));
-        }
-      }catch(e){ console.error(e); }
+    if (!user?.id) {
+      showErrorAlert('User not found. Please log in again.');
+      return;
     }
 
-    const tx = {
-      id: Date.now().toString(),
-      userId: user?.id || '',
-      type: 'withdrawal' as const,
-      amount: numericAmount,
-      description: 'Withdrawal request',
-      status: 'pending' as const,
-      createdAt: new Date(),
-    };
-    const existing = JSON.parse(localStorage.getItem(`transactions_${user?.id}`) || '[]');
-    existing.unshift(tx);
-    localStorage.setItem(`transactions_${user?.id}`, JSON.stringify(existing));
+    // Create withdrawal request using AutoPaymentService
+    const result = AutoPaymentService.createWithdrawalRequest(
+      user.id,
+      numericAmount,
+      'Mobile Money', // Default method
+      {
+        phoneNumber: user.phone || user.email, // Use phone or email as fallback
+        requestedAt: new Date().toISOString()
+      }
+    );
 
-    setError('');
-    showSuccessAlert(`Withdrawal request for ${numericAmount.toLocaleString()} TZS submitted successfully! Your request is pending admin approval and will be processed soon.`);
-    navigate('/withdrawal-log');
+    if (result.success) {
+      // Update user balance in context
+      const newBalance = (user.balance || 0) - numericAmount;
+      updateUser({ balance: newBalance });
+      
+      setError('');
+      setAmount('');
+      showSuccessAlert(result.message);
+      navigate('/withdrawal-log');
+    } else {
+      showErrorAlert(result.message);
+    }
   };
 
   return (

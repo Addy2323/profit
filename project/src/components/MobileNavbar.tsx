@@ -2,23 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { User, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { NotificationService } from '../services/NotificationService';
 
 const MobileNavbar: React.FC = () => {
   const { user } = useAuth();
-  const [hasUnread, setHasUnread] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     if (user) {
       const checkUnread = () => {
-        const notificationsKey = `notifications_${user.id}`;
-        const storedNotifications = JSON.parse(localStorage.getItem(notificationsKey) || '[]');
-        const unread = storedNotifications.some((n: any) => !n.read);
-        setHasUnread(unread);
+        const count = NotificationService.getUnreadCount(user.id);
+        setUnreadCount(count);
       };
 
       checkUnread();
       // Poll for new notifications periodically
-      const interval = setInterval(checkUnread, 5000); // Check every 5 seconds
+      const interval = setInterval(checkUnread, 3000); // Check every 3 seconds
       return () => clearInterval(interval);
     }
   }, [user]);
@@ -37,8 +36,10 @@ const MobileNavbar: React.FC = () => {
       <div className="flex items-center space-x-3">
         <Link to="/notifications" className="relative">
           <Bell className="w-6 h-6 text-gray-400" />
-          {hasUnread && (
-            <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold ring-2 ring-gray-800">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
           )}
         </Link>
         <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">

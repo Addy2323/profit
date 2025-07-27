@@ -31,7 +31,7 @@ const DashboardPage: React.FC = () => {
     { icon: Headphones, label: 'Customer Service', path: '/CustomerService', color: 'from-blue-500 to-blue-600' },
     { icon: LinkIcon, label: 'App Download', path: '/download', color: 'from-orange-500 to-orange-600' },
     { icon: FileText, label: 'About Us', path: '/about', color: 'from-yellow-500 to-yellow-600' },
-    { icon: TrendingDown, label: 'Transaction History', path: '/transaction-history', color: 'from-red-500 to-red-600' },
+    { icon: TrendingDown, label: 'Transaction History', path: '/withdrawal-log', color: 'from-red-500 to-red-600' },
     { icon: DollarSign, label: 'Recharge Log', path: '/recharge-log', color: 'from-indigo-500 to-indigo-600' },
     { icon: Dice6, label: 'Lottery', path: '/lucky-draw', color: 'from-pink-500 to-pink-600' },
     { icon: LogOut, label: 'Logout', action: 'logout', color: 'from-gray-500 to-gray-600' }
