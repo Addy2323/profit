@@ -98,11 +98,11 @@ const WithdrawalPage: React.FC = () => {
 
         {/* Info list */}
         <ol className="list-decimal list-inside space-y-2 text-sm text-gray-300">
-          <li>Withdrawal request time is Monday to Sunday 9:00 to 21:00, once you request a withdrawal, the funds will arrive in your account within 24 hours. Please be patient, as network fluctuations may cause your payment to take longer to arrive.</li>
+          <li>Withdrawal request time is Monday to Friday 9:00 to 21:00, once you request a withdrawal, the funds will arrive in your account within 24 hours. Please be patient, as network fluctuations may cause your payment to take longer to arrive.</li>
           <li>Your account must have our company's products before you can apply for a withdrawal</li>
           <li>The minimum withdrawal amount is 3,000 TZS</li>
           <li>The withdrawal fee is 6%</li>
-          <li>If you have any questions about the withdrawal method, please contact Telegram customer service in time</li>
+          <li>If you have any questions about the withdrawal method, please contact WhatsApp customer service in time</li>
         </ol>
       </div>
     </div>

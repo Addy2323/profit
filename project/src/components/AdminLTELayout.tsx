@@ -16,7 +16,15 @@ import {
   ArrowTrendingUpIcon,
   ClockIcon,
   CreditCardIcon,
-  PresentationChartLineIcon
+  PresentationChartLineIcon,
+  PlusCircleIcon,
+  AdjustmentsHorizontalIcon,
+  CalendarDaysIcon,
+  TrophyIcon,
+  ExclamationTriangleIcon,
+  ChartPieIcon,
+  BellIcon,
+  StarIcon
 } from '@heroicons/react/24/outline';
 
 const AdminLTELayout: React.FC = () => {
@@ -92,26 +100,68 @@ const AdminLTELayout: React.FC = () => {
               </div>
               {investmentOpen && (
                 <div className="ml-8 space-y-1">
+                  {/* Create & Manage Plans */}
                   <NavLink
                     to="/admin/investments/create"
                     className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 no-underline"
                   >
-                    <CurrencyDollarIcon className="h-4 w-4" />
-                    <span>Create Plan</span>
+                    <PlusCircleIcon className="h-4 w-4" />
+                    <span>🚀 Create Plan</span>
                   </NavLink>
                   <NavLink
                     to="/admin/investments"
                     className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 no-underline"
                   >
-                    <PresentationChartLineIcon className="h-4 w-4" />
+                    <AdjustmentsHorizontalIcon className="h-4 w-4" />
                     <span>Manage Plans</span>
                   </NavLink>
+                  
+                  {/* Returns & Performance */}
                   <NavLink
                     to="/admin/daily-returns"
                     className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 no-underline"
                   >
-                    <ClockIcon className="h-4 w-4" />
-                    <span>Daily Returns</span>
+                    <CalendarDaysIcon className="h-4 w-4" />
+                    <span>💰 Daily Returns</span>
+                  </NavLink>
+                  <NavLink
+                    to="/admin/investment-analytics"
+                    className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 no-underline"
+                  >
+                    <ChartPieIcon className="h-4 w-4" />
+                    <span>📊 Analytics</span>
+                  </NavLink>
+                  
+                  {/* User Management */}
+                  <NavLink
+                    to="/admin/investor-rankings"
+                    className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 no-underline"
+                  >
+                    <TrophyIcon className="h-4 w-4" />
+                    <span>🏆 Top Investors</span>
+                  </NavLink>
+                  <NavLink
+                    to="/admin/investment-alerts"
+                    className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 no-underline"
+                  >
+                    <BellIcon className="h-4 w-4" />
+                    <span>🔔 Alerts</span>
+                  </NavLink>
+                  
+                  {/* Risk Management */}
+                  <NavLink
+                    to="/admin/risk-management"
+                    className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 no-underline"
+                  >
+                    <ExclamationTriangleIcon className="h-4 w-4" />
+                    <span>⚠️ Risk Monitor</span>
+                  </NavLink>
+                  <NavLink
+                    to="/admin/plan-performance"
+                    className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 no-underline"
+                  >
+                    <StarIcon className="h-4 w-4" />
+                    <span>⭐ Performance</span>
                   </NavLink>
                 </div>
               )}
@@ -185,6 +235,23 @@ const AdminLTELayout: React.FC = () => {
           >
             <UsersIcon className="h-5 w-5" />
             {!sidebarCollapsed && <span className="font-medium">Users</span>}
+          </NavLink>
+
+          {/* User Analytics */}
+          <NavLink
+            to="/admin/user-analytics"
+            className={({ isActive }) =>
+              `flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 no-underline ${
+                isActive
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
+                  : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600'
+              } ${
+                sidebarCollapsed ? 'justify-center' : ''
+              }`
+            }
+          >
+            <ChartBarIcon className="h-5 w-5" />
+            {!sidebarCollapsed && <span className="font-medium">User Analytics</span>}
           </NavLink>
 
           {/* Profile */}

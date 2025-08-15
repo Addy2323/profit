@@ -12,10 +12,17 @@ import ServicesPage from './pages/admin/ServicesPage';
 import PaymentSystemPage from './pages/admin/PaymentSystemPage';
 import InvestmentPlansPage from './pages/admin/InvestmentPlansPage';
 import EnhancedUserManagementPage from './pages/admin/EnhancedUserManagementPage';
+import UserAnalyticsPage from './pages/admin/UserAnalyticsPage';
 import FraudPreventionPage from './pages/admin/FraudPreventionPage';
 import WithdrawalQueuePage from './pages/admin/WithdrawalQueuePage';
 import RevenueInsightsPage from './pages/admin/RevenueInsightsPage';
 import AutoReportsPage from './pages/admin/AutoReportsPage';
+import InvestmentAnalyticsPage from './pages/admin/InvestmentAnalyticsPage';
+import TopInvestorsPage from './pages/admin/TopInvestorsPage';
+import InvestmentAlertsPage from './pages/admin/InvestmentAlertsPage';
+import CreateInvestmentPlanPage from './pages/admin/CreateInvestmentPlanPage';
+import RiskMonitorPage from './pages/admin/RiskMonitorPage';
+import PerformanceTrackingPage from './pages/admin/PerformanceTrackingPage';
 
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -75,7 +82,14 @@ function App() {
             <Route path="investments" element={<ServicesPage />} />
             <Route path="investments/create" element={<ServicesPage />} />
             <Route path="investment-plans" element={<InvestmentPlansPage />} />
+            <Route path="create-plan" element={<CreateInvestmentPlanPage />} />
+            <Route path="investment-analytics" element={<InvestmentAnalyticsPage />} />
+            <Route path="top-investors" element={<TopInvestorsPage />} />
+            <Route path="investment-alerts" element={<InvestmentAlertsPage />} />
+            <Route path="risk-monitor" element={<RiskMonitorPage />} />
+            <Route path="performance-tracking" element={<PerformanceTrackingPage />} />
             <Route path="enhanced-users" element={<EnhancedUserManagementPage />} />
+            <Route path="user-analytics" element={<UserAnalyticsPage />} />
             <Route path="fraud-prevention" element={<FraudPreventionPage />} />
             <Route path="withdrawal-queue" element={<WithdrawalQueuePage />} />
             <Route path="revenue-insights" element={<RevenueInsightsPage />} />

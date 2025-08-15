@@ -421,175 +421,6 @@ export class AutoPaymentService {
   }
 
   // Admin function to manually confirm pending transactions
-  static async confirmTransaction(transactionId: string): Promise<boolean> {
-    try {
-      const transactions = JSON.parse(localStorage.getItem('processed_transactions') || '[]');
-      const transaction = transactions.find((t: PaymentTransaction) => t.id === transactionId);
-      
-      if (transaction && transaction.status === 'pending') {
-        transaction.status = 'confirmed';
-        localStorage.setItem('processed_transactions', JSON.stringify(transactions));
-        
-        // Update user balance if userId exists
-        if (transaction.userId) {
-          await this.updateUserBalance(transaction.userId, transaction.amount);
-        }
-        
-        return true;
-      }
-      
-      return false;
-    } catch (error) {
-      return false;
-    }
-  }
-
-  // Fraud detection: Check for similar transaction IDs
-  private static detectSimilarTransactionId(
-    newTransactionId: string,
-    existingTransactions: PaymentTransaction[],
-    userId: string
-  ): PaymentTransaction | null {
-    const userTransactions = existingTransactions.filter(t => t.userId === userId);
-    
-    for (const transaction of userTransactions) {
-      const similarity = this.calculateTransactionIdSimilarity(newTransactionId, transaction.transactionId);
-      
-      // If similarity is too high (more than 80%), it's suspicious
-      if (similarity > 0.8) {
-        return transaction;
-      }
-    }
-    
-    return null;
-  }
-
-  // Calculate similarity between two transaction IDs using Levenshtein distance
-  private static calculateTransactionIdSimilarity(str1: string, str2: string): number {
-    const len1 = str1.length;
-    const len2 = str2.length;
-    
-    // If lengths are very different, they're not similar
-    if (Math.abs(len1 - len2) > 2) {
-      return 0;
-    }
-    
-    // Create a matrix for dynamic programming
-    const matrix = Array(len1 + 1).fill(null).map(() => Array(len2 + 1).fill(null));
-    
-    // Initialize first row and column
-    for (let i = 0; i <= len1; i++) matrix[i][0] = i;
-    for (let j = 0; j <= len2; j++) matrix[0][j] = j;
-    
-    // Fill the matrix
-    for (let i = 1; i <= len1; i++) {
-      for (let j = 1; j <= len2; j++) {
-        const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
-        matrix[i][j] = Math.min(
-          matrix[i - 1][j] + 1,     // deletion
-          matrix[i][j - 1] + 1,     // insertion
-          matrix[i - 1][j - 1] + cost // substitution
-        );
-      }
-    }
-    
-    const distance = matrix[len1][len2];
-    const maxLength = Math.max(len1, len2);
-    
-    // Return similarity as a percentage (1 - normalized distance)
-    return 1 - (distance / maxLength);
-  }
-
-  // Log fraud attempts for admin monitoring
-  private static logFraudAttempt(userId: string, attemptedTransactionId: string, similarTransactionId: string): void {
-    try {
-      const fraudLogs = JSON.parse(localStorage.getItem('fraud_attempts') || '[]');
-      
-      const fraudAttempt = {
-        id: Date.now().toString(),
-        userId,
-        attemptedTransactionId,
-        similarTransactionId,
-        timestamp: new Date(),
-        type: 'similar_transaction_id',
-        severity: 'high'
-      };
-      
-      fraudLogs.unshift(fraudAttempt);
-      
-      // Keep only last 1000 fraud attempts
-      if (fraudLogs.length > 1000) {
-        fraudLogs.splice(1000);
-      }
-      
-      localStorage.setItem('fraud_attempts', JSON.stringify(fraudLogs));
-      
-      // Also increment user's fraud attempt counter
-      this.incrementUserFraudAttempts(userId);
-      
-    } catch (error) {
-      console.error('Error logging fraud attempt:', error);
-    }
-  }
-
-  // Increment user's fraud attempt counter
-  private static incrementUserFraudAttempts(userId: string): void {
-    try {
-      const users = JSON.parse(localStorage.getItem('profitnet_users') || '[]');
-      const userIndex = users.findIndex((u: any) => u.id === userId);
-      
-      if (userIndex !== -1) {
-        users[userIndex].fraudAttempts = (users[userIndex].fraudAttempts || 0) + 1;
-        users[userIndex].lastFraudAttempt = new Date();
-        
-        // Block user if too many fraud attempts (3 or more)
-        if (users[userIndex].fraudAttempts >= 3) {
-          users[userIndex].isBlocked = true;
-          users[userIndex].blockReason = 'Multiple suspicious transaction attempts';
-          
-          // Trigger immediate logout by dispatching a custom event
-          window.dispatchEvent(new CustomEvent('userBlocked', { 
-            detail: { 
-              userId: userId,
-              reason: 'Multiple suspicious transaction attempts'
-            }
-          }));
-        }
-        
-        localStorage.setItem('profitnet_users', JSON.stringify(users));
-      }
-    } catch (error) {
-      console.error('Error incrementing fraud attempts:', error);
-    }
-  }
-
-  // Admin function to get fraud attempts
-  static getFraudAttempts(): any[] {
-    return JSON.parse(localStorage.getItem('fraud_attempts') || '[]');
-  }
-
-  // Admin function to clear user fraud attempts and unblock user
-  static clearUserFraudAttempts(userId: string): boolean {
-    try {
-      const users = JSON.parse(localStorage.getItem('profitnet_users') || '[]');
-      const userIndex = users.findIndex((u: any) => u.id === userId);
-      
-      if (userIndex !== -1) {
-        users[userIndex].fraudAttempts = 0;
-        users[userIndex].isBlocked = false;
-        delete users[userIndex].blockReason;
-        localStorage.setItem('profitnet_users', JSON.stringify(users));
-        return true;
-      }
-      
-      return false;
-    } catch (error) {
-      console.error('Error clearing user fraud attempts:', error);
-      return false;
-    }
-  }
-
-  // Admin function to confirm a pending transaction
   static confirmTransaction(transactionId: string): {
     success: boolean;
     message: string;
@@ -966,6 +797,151 @@ export class AutoPaymentService {
         success: false,
         message: 'Error rejecting withdrawal request. Please try again.'
       };
+    }
+  }
+
+  // Fraud detection: Check for similar transaction IDs
+  private static detectSimilarTransactionId(
+    newTransactionId: string,
+    existingTransactions: PaymentTransaction[],
+    userId: string
+  ): PaymentTransaction | null {
+    const userTransactions = existingTransactions.filter(t => t.userId === userId);
+    
+    for (const transaction of userTransactions) {
+      const similarity = this.calculateTransactionIdSimilarity(newTransactionId, transaction.transactionId);
+      
+      // If similarity is too high (more than 80%), it's suspicious
+      if (similarity > 0.8) {
+        return transaction;
+      }
+    }
+    
+    return null;
+  }
+
+  // Calculate similarity between two transaction IDs using Levenshtein distance
+  private static calculateTransactionIdSimilarity(str1: string, str2: string): number {
+    const len1 = str1.length;
+    const len2 = str2.length;
+    
+    // If lengths are very different, they're not similar
+    if (Math.abs(len1 - len2) > 2) {
+      return 0;
+    }
+    
+    // Create a matrix for dynamic programming
+    const matrix = Array(len1 + 1).fill(null).map(() => Array(len2 + 1).fill(null));
+    
+    // Initialize first row and column
+    for (let i = 0; i <= len1; i++) matrix[i][0] = i;
+    for (let j = 0; j <= len2; j++) matrix[0][j] = j;
+    
+    // Fill the matrix
+    for (let i = 1; i <= len1; i++) {
+      for (let j = 1; j <= len2; j++) {
+        const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j] + 1,     // deletion
+          matrix[i][j - 1] + 1,     // insertion
+          matrix[i - 1][j - 1] + cost // substitution
+        );
+      }
+    }
+    
+    const distance = matrix[len1][len2];
+    const maxLength = Math.max(len1, len2);
+    
+    // Return similarity as a percentage (1 - normalized distance)
+    return 1 - (distance / maxLength);
+  }
+
+  // Log fraud attempts for admin monitoring
+  private static logFraudAttempt(userId: string, attemptedTransactionId: string, similarTransactionId: string): void {
+    try {
+      const fraudLogs = JSON.parse(localStorage.getItem('fraud_attempts') || '[]');
+      
+      const fraudAttempt = {
+        id: Date.now().toString(),
+        userId,
+        attemptedTransactionId,
+        similarTransactionId,
+        timestamp: new Date(),
+        type: 'similar_transaction_id',
+        severity: 'high'
+      };
+      
+      fraudLogs.unshift(fraudAttempt);
+      
+      // Keep only last 1000 fraud attempts
+      if (fraudLogs.length > 1000) {
+        fraudLogs.splice(1000);
+      }
+      
+      localStorage.setItem('fraud_attempts', JSON.stringify(fraudLogs));
+      
+      // Also increment user's fraud attempt counter
+      this.incrementUserFraudAttempts(userId);
+      
+    } catch (error) {
+      console.error('Error logging fraud attempt:', error);
+    }
+  }
+
+  // Increment user's fraud attempt counter
+  private static incrementUserFraudAttempts(userId: string): void {
+    try {
+      const users = JSON.parse(localStorage.getItem('profitnet_users') || '[]');
+      const userIndex = users.findIndex((u: any) => u.id === userId);
+      
+      if (userIndex !== -1) {
+        users[userIndex].fraudAttempts = (users[userIndex].fraudAttempts || 0) + 1;
+        users[userIndex].lastFraudAttempt = new Date();
+        
+        // Block user if too many fraud attempts (3 or more)
+        if (users[userIndex].fraudAttempts >= 3) {
+          users[userIndex].isBlocked = true;
+          users[userIndex].blockReason = 'Multiple suspicious transaction attempts';
+          
+          // Trigger immediate logout by dispatching a custom event
+          window.dispatchEvent(new CustomEvent('userBlocked', { 
+            detail: { 
+              userId: userId,
+              reason: 'Multiple suspicious transaction attempts'
+            }
+          }));
+        }
+        
+        localStorage.setItem('profitnet_users', JSON.stringify(users));
+      }
+    } catch (error) {
+      console.error('Error incrementing fraud attempts:', error);
+    }
+  }
+
+  // Admin function to get fraud attempts
+  static getFraudAttempts(): any[] {
+    return JSON.parse(localStorage.getItem('fraud_attempts') || '[]');
+  }
+
+  // Admin function to clear user fraud attempts and unblock user
+  static clearUserFraudAttempts(userId: string): boolean {
+    try {
+      const users = JSON.parse(localStorage.getItem('profitnet_users') || '[]');
+      const userIndex = users.findIndex((u: any) => u.id === userId);
+      
+      if (userIndex !== -1) {
+        users[userIndex].fraudAttempts = 0;
+        users[userIndex].isBlocked = false;
+        delete users[userIndex].blockReason;
+        localStorage.setItem('profitnet_users', JSON.stringify(users));
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error clearing user fraud attempts:', error);
+      return false;
     }
   }
 }

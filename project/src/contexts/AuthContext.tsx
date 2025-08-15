@@ -199,7 +199,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (!foundUser) {
         setIsLoading(false);
-        showErrorAlert('Invalid email/phone or password. Please check your credentials.');
+        showErrorAlert('Invalid phone number or password. Please check your credentials.');
         return false; // User not found
       }
 
